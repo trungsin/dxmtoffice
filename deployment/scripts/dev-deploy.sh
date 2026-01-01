@@ -13,18 +13,30 @@ fi
 
 # Deploy infrastructure
 echo "Deploying infrastructure..." | tee -a "$LOG_FILE"
-docker compose -f infrastructure/nginx/docker-compose.yml up -d 2>&1 | tee -a "$LOG_FILE"
-docker compose -f infrastructure/mailcow/docker-compose.yml up -d 2>&1 | tee -a "$LOG_FILE"
-docker compose -f infrastructure/nextcloud/docker-compose.yml up -d 2>&1 | tee -a "$LOG_FILE"
+{
+    docker compose -f infrastructure/nginx/docker-compose.yml up -d
+    docker compose -f infrastructure/mailcow/docker-compose.yml up -d
+    docker compose -f infrastructure/nextcloud/docker-compose.yml up -d
+} 2>&1 | tee -a "$LOG_FILE" || {
+    echo "Deployment FAILED. Capturing error context..." | tee -a "$LOG_FILE"
+    echo "# Latest Deployment Error ($TIMESTAMP)" > deployment/logs/ai-context/latest-error.md
+    tail -n 20 "$LOG_FILE" >> deployment/logs/ai-context/latest-error.md
+    exit 1
+}
 
 # Healthcheck
-./deployment/scripts/healthcheck.sh 2>&1 | tee -a "$LOG_FILE"
+./deployment/scripts/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
+    echo "Healthcheck FAILED. Capturing error context..." | tee -a "$LOG_FILE"
+    echo "# Latest Healthcheck Error ($TIMESTAMP)" > deployment/logs/ai-context/latest-error.md
+    ./deployment/scripts/healthcheck.sh >> deployment/logs/ai-context/latest-error.md
+    exit 1
+}
 
 # Logging & Git push
 if [ "$GIT_PUSH_LOG" = "true" ]; then
     echo "Pushing logs to git..." | tee -a "$LOG_FILE"
     cp "$LOG_FILE" deployment/logs/dev/system-summary.log
-    git add deployment/logs/dev/
+    git add deployment/logs/
     git commit -m "chore(log): dev deploy log $TIMESTAMP"
     git push origin main
 fi

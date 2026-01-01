@@ -1,37 +1,63 @@
-# DXMT Office (Self-Hosted Office Suite)
+# ✅ DXMT Office - Mail + Office + AI (Self-Hosted)
 
-A complete, self-hosted replacement for Outlook + Google Workspace, featuring Email, File Sharing, and AI integration.
+Hệ thống văn phòng tự host tương đương Outlook + Google Workspace, được thiết kế để vận hành ổn định, bảo mật và tích hợp AI mạnh mẽ.
 
-## 🚀 Quick Start
+## 🎯 Mục tiêu hệ thống
+- **Email Server**: Mailcow (Postfix, Dovecot, SOGo).
+- **Office**: Nextcloud + OnlyOffice (Real-time collaboration).
+- **Proxy**: Nginx Proxy Manager (SSL Let's Encrypt).
+- **AI**: Phase 1 (OpenAI/Claude API) integration.
 
-### 1. Prerequisites
-- Ubuntu 22.04+
-- Docker & Docker Compose
-- Domain names pointed to Server IP
+## 🌐 Domains
+- `feelmagic.store` - Proxy Manager Admin
+- `mail.feelmagic.store` - Webmail & Mail Admin
+- `office.feelmagic.store` - Nextcloud Office
+- `ai.feelmagic.store` - AI Services
 
-### 2. Configuration
-Copy `.env.example` to `.env.dev` or `.env.prod` and update the variables.
+## 🚀 Lộ trình triển khai
 
-### 3. Deployment
-**Development Mode:**
+### 1️⃣ Chuẩn bị (Dev Mode)
+Sử dụng Dev Mode để kiểm tra trên VPS test trước khi release.
+
 ```bash
+# Clone repository
+git clone https://github.com/trungsin/dxmtoffice
+cd dxmtoffice
+
+# Copy env
+cp .env.example .env.dev
+
+# Chạy deploy dev
 ./deployment/scripts/dev-deploy.sh
 ```
 
-**Production Mode:**
+### 2️⃣ Vận hành (Production Mode)
+Sau khi test OK, chuyển sang Production Mode để tối ưu hiệu suất và bảo mật.
+
 ```bash
+# Cấu hình production
+cp .env.example .env.prod
+# (Sửa .env.prod: DEV_MODE=false, GIT_PUSH_LOG=false)
+
+# Chạy deploy prod
 ./deployment/scripts/prod-deploy.sh
 ```
 
-## 📂 Repository Structure
-- `infrastructure/`: Core service configurations (Mailcow, Nextcloud, NPM).
-- `deployment/`: Deployment scripts, logs, and CI/CD workflows.
-- `docs/`: System architecture, setup, and troubleshooting guides.
-- `docker-compose.yml`: Root compose file for production.
-- `docker-compose.dev.yml`: Root compose file for development.
+## 📂 Cấu trúc dự án
+- `infrastructure/`: Chứa Docker Compose và config của từng service.
+- `deployment/`: Chứa scripts vận hành và logs.
+- `docs/`: Tài liệu chi tiết (Setup, Architecture, Troubleshooting).
 
-## 🤖 AI Integration
-Phase 1 (API-based) is ready for configuration in Nextcloud. Update your `.env` with API keys.
+## ♻️ Quy trình Loop Fix (Dev Mode)
+Trong chế độ Dev, hệ thống tự động:
+1. Ghi log chi tiết vào `deployment/logs/dev/`.
+2. Đẩy log lên Git (`chore(log): dev deploy log ...`).
+3. Lưu lỗi mới nhất vào `deployment/logs/ai-context/latest-error.md`.
 
 ## 🧪 CI/CD
-Automated deployment is handled via GitHub Actions in `.github/workflows/cd.yml`.
+Tích hợp GitHub Actions để:
+- Tự động deploy khi push vào nhánh `main`.
+- Tự động Rollback (`./deployment/scripts/rollback.sh`) nếu deploy thất bại.
+
+## 🛠 Hỗ trợ
+Xem chi tiết tại [docs/setup.md](docs/setup.md) và [docs/troubleshooting.md](docs/troubleshooting.md).
