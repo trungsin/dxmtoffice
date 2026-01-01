@@ -8,8 +8,9 @@ services:
   ai-service:
     build: ./ai/service
     container_name: dxmt-ai-service
+    restart: always
     environment:
-      - DEV_MODE=true
+      - DEV_MODE=false
       - AI_PROVIDER=${AI_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}

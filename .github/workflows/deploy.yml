@@ -1,0 +1,32 @@
+name: Enterprise Deploy Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+             cd /path/to/dxmtoffice
+             git pull origin main
+             chmod +x deploy/scripts/*.sh
+             ./deploy/scripts/deploy_dev.sh || ./deploy/scripts/rollback.sh
+
+      - name: Verify Health
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+             ./deploy/scripts/healthcheck.sh
