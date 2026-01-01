@@ -1,63 +1,50 @@
-# ✅ DXMT Office - Mail + Office + AI (Self-Hosted)
+# ✅ DXMT Office - Ubuntu VPS + Gemini AI
 
-Hệ thống văn phòng tự host tương đương Outlook + Google Workspace, được thiết kế để vận hành ổn định, bảo mật và tích hợp AI mạnh mẽ.
+Hệ thống văn phòng tự host (Mail, Office, AI) được tối ưu hóa cho Ubuntu 20.04/22.04 và tích hợp Google Gemini AI.
 
-## 🎯 Mục tiêu hệ thống
-- **Email Server**: Mailcow (Postfix, Dovecot, SOGo).
-- **Office**: Nextcloud + OnlyOffice (Real-time collaboration).
-- **Proxy**: Nginx Proxy Manager (SSL Let's Encrypt).
-- **AI**: Phase 1 (OpenAI/Claude API) integration.
+## 🚀 Triển khai nhanh trên Ubuntu
 
-## 🌐 Domains
-- `feelmagic.store` - Proxy Manager Admin
-- `mail.feelmagic.store` - Webmail & Mail Admin
-- `office.feelmagic.store` - Nextcloud Office
-- `ai.feelmagic.store` - AI Services
+### 1. Chuẩn bị VPS
+- Thuê VPS Ubuntu (Khuyên dùng: 2 vCPU, 4GB RAM).
+- Trỏ các domain sau về IP VPS:
+  - `feelmagic.store`
+  - `mail.feelmagic.store`
+  - `office.feelmagic.store`
+  - `ai.feelmagic.store`
+  - `api.feelmagic.store`
 
-## 🚀 Lộ trình triển khai
-
-### 1️⃣ Chuẩn bị (Dev Mode)
-Sử dụng Dev Mode để kiểm tra trên VPS test trước khi release.
-
+### 2. Cài đặt (One-liner)
 ```bash
-# Clone repository
 git clone https://github.com/trungsin/dxmtoffice
 cd dxmtoffice
-
-# Copy env
-cp .env.example .env.dev
-
-# Chạy deploy dev
-./deployment/scripts/dev-deploy.sh
+chmod +x deploy/ubuntu/*.sh
+./deploy/ubuntu/install_dependencies.sh
+./deploy/ubuntu/setup_server.sh
 ```
 
-### 2️⃣ Vận hành (Production Mode)
-Sau khi test OK, chuyển sang Production Mode để tối ưu hiệu suất và bảo mật.
+### 3. Cấu hình
+Copy `.env.example` thành `.env.prod` và nhập:
+- `GEMINI_API_KEY`: Lấy tại [Google AI Studio](https://aistudio.google.com/).
+- Cập nhật các domain tương ứng.
 
+### 4. Deploy
 ```bash
-# Cấu hình production
-cp .env.example .env.prod
-# (Sửa .env.prod: DEV_MODE=false, GIT_PUSH_LOG=false)
-
-# Chạy deploy prod
-./deployment/scripts/prod-deploy.sh
+./deploy/ubuntu/setup_domain.sh  # Cấu hình SSL
+./deploy/scripts/deploy_prod.sh # Khởi chạy hệ thống
 ```
 
-## 📂 Cấu trúc dự án
-- `infrastructure/`: Chứa Docker Compose và config của từng service.
-- `deployment/`: Chứa scripts vận hành và logs.
-- `docs/`: Tài liệu chi tiết (Setup, Architecture, Troubleshooting).
+## 🤖 Tính năng AI (Gemini)
+Hệ thống sử dụng Gemini 1.5/2.0 để hỗ trợ:
+- **Smart Writing**: Gợi ý soạn thảo văn bản và email chuyên nghiệp.
+- **Reporting**: Tạo báo cáo tự động từ dữ liệu văn bản.
+- **AI Assistant**: Trợ lý giải đáp và xử lý tác vụ tại `ai.feelmagic.store`.
 
-## ♻️ Quy trình Loop Fix (Dev Mode)
-Trong chế độ Dev, hệ thống tự động:
-1. Ghi log chi tiết vào `deployment/logs/dev/`.
-2. Đẩy log lên Git (`chore(log): dev deploy log ...`).
-3. Lưu lỗi mới nhất vào `deployment/logs/ai-context/latest-error.md`.
+## 📂 Quản lý & Bảo trì
+- **Xem log**: `./deploy/ubuntu/status.sh` hoặc `./deploy/scripts/view_logs.sh prod`
+- **Backup**: Công cụ backup tích hợp trong Mailcow và Nextcloud.
+- **Troubleshooting**: Xem chi tiết tại `docs/troubleshooting.md`.
 
-## 🧪 CI/CD
-Tích hợp GitHub Actions để:
-- Tự động deploy khi push vào nhánh `main`.
-- Tự động Rollback (`./deployment/scripts/rollback.sh`) nếu deploy thất bại.
-
-## 🛠 Hỗ trợ
-Xem chi tiết tại [docs/setup.md](docs/setup.md) và [docs/troubleshooting.md](docs/troubleshooting.md).
+## 🔒 Bảo mật
+- Tự động cấu hình UFW (Firewall).
+- Tự động gia hạn SSL qua Certbot.
+- Mode Dev/Prod tách biệt hoàn toàn.
