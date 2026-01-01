@@ -1,0 +1,4 @@
+include:
+  - infrastructure/nginx/docker-compose.yml
+  - infrastructure/mailcow/docker-compose.yml
+  - infrastructure/nextcloud/docker-compose.yml
