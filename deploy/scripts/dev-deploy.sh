@@ -2,13 +2,13 @@
 set -e
 
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-LOG_FILE="deployment/logs/dev/deploy-$TIMESTAMP.log"
+LOG_FILE="deploy/logs/dev/deploy-$TIMESTAMP.log"
 
 echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 
 # Load environment
 if [ -f .env.dev ]; then
-    export $(cat .env.dev | xargs)
+    export $(grep -v '^#' .env.dev | xargs)
 fi
 
 # Deploy infrastructure
@@ -19,24 +19,24 @@ echo "Deploying infrastructure..." | tee -a "$LOG_FILE"
     docker compose -f infrastructure/nextcloud/docker-compose.yml up -d
 } 2>&1 | tee -a "$LOG_FILE" || {
     echo "Deployment FAILED. Capturing error context..." | tee -a "$LOG_FILE"
-    echo "# Latest Deployment Error ($TIMESTAMP)" > deployment/logs/ai-context/latest-error.md
-    tail -n 20 "$LOG_FILE" >> deployment/logs/ai-context/latest-error.md
+    echo "# Latest Deployment Error ($TIMESTAMP)" > deploy/logs/ai-context/latest-error.md
+    tail -n 20 "$LOG_FILE" >> deploy/logs/ai-context/latest-error.md
     exit 1
 }
 
 # Healthcheck
-./deployment/scripts/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
+./deploy/scripts/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
     echo "Healthcheck FAILED. Capturing error context..." | tee -a "$LOG_FILE"
-    echo "# Latest Healthcheck Error ($TIMESTAMP)" > deployment/logs/ai-context/latest-error.md
-    ./deployment/scripts/healthcheck.sh >> deployment/logs/ai-context/latest-error.md
+    echo "# Latest Healthcheck Error ($TIMESTAMP)" > deploy/logs/ai-context/latest-error.md
+    ./deploy/scripts/healthcheck.sh >> deploy/logs/ai-context/latest-error.md
     exit 1
 }
 
 # Logging & Git push
 if [ "$GIT_PUSH_LOG" = "true" ]; then
     echo "Pushing logs to git..." | tee -a "$LOG_FILE"
-    cp "$LOG_FILE" deployment/logs/dev/system-summary.log
-    git add deployment/logs/
+    cp "$LOG_FILE" deploy/logs/dev/system-summary.log
+    git add deploy/logs/
     git commit -m "chore(log): dev deploy log $TIMESTAMP"
     git push origin main
 fi

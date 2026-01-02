@@ -3,7 +3,7 @@ set -e
 
 # Load environment
 if [ -f .env.prod ]; then
-    export $(cat .env.prod | xargs)
+    export $(grep -v '^#' .env.prod | xargs)
 fi
 
 echo "Starting Production Deployment..."
@@ -12,6 +12,6 @@ echo "Starting Production Deployment..."
 docker compose -f docker-compose.yml up -d
 
 # Healthcheck
-./deployment/scripts/healthcheck.sh
+./deploy/scripts/healthcheck.sh
 
 echo "Production Deployment completed."

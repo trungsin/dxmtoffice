@@ -11,7 +11,7 @@ echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 
 # Load environment
 if [ -f .env.dev ]; then
-    export $(cat .env.dev | xargs)
+    export $(grep -v '^#' .env.dev | xargs)
 fi
 
 # Deploy services

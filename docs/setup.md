@@ -11,12 +11,12 @@ This guide explains how to deploy the self-hosted office suite.
 
 ### Dev Mode
 ```bash
-./deployment/scripts/dev-deploy.sh
+./deploy/scripts/dev-deploy.sh
 ```
 
 ### Production Mode
 ```bash
-./deployment/scripts/prod-deploy.sh
+./deploy/scripts/prod-deploy.sh
 ```
 
 ## Domains
