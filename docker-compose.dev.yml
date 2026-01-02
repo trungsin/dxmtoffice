@@ -8,10 +8,13 @@ services:
   ai-service:
     build: ./ai/service
     container_name: dxmt-ai-service
+    ports:
+      - "3000:3000"
     environment:
       - DEV_MODE=true
-      - AI_PROVIDER=${AI_PROVIDER:-openai}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AI_LOG_ENABLED=true
     networks:
       - infrastructure_default
+  # Dev overrides for easier local testing (bypass Nginx if needed)
+  # Actual production traffic goes through NPM on 80/443

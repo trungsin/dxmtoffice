@@ -1,11 +1,15 @@
 #!/bin/bash
 set -e
 
-TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-LOG_FILE="deploy/logs/dev/deploy-$TIMESTAMP.log"
-
 # Ensure log directories exist
 mkdir -p deploy/logs/dev
+
+# Git Identity Fix (for VPS deployments)
+if [ -z "$(git config user.email)" ]; then
+    echo "Configuring temporary git identity..."
+    git config user.email "admin@feelmagic.store"
+    git config user.name "DXMT Admin"
+fi
 
 echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 
