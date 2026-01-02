@@ -1,0 +1,17 @@
+Starting Dev Deployment at 20260102-085601
+Deploying infrastructure...
+time="2026-01-02T08:56:02+07:00" level=warning msg="/root/dxmtoffice/infrastructure/nginx/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Container nginx-db-1 Running 
+ Container nginx-app-1 Running 
+open /root/dxmtoffice/infrastructure/mailcow/docker-compose.yml: no such file or directory
+open /root/dxmtoffice/infrastructure/nextcloud/docker-compose.yml: no such file or directory
+Running Healthchecks...
+✅ Nginx Proxy Manager (80) is UP
+✅ SSL Gateway (443) is UP
+❌ Postfix (SMTP) (25) is DOWN
+❌ Submission (SMTP) (587) is DOWN
+❌ IMAP (Secure) (993) is DOWN
+❌ Mailcow UI (Internal) (8080) is DOWN
+❌ Nextcloud (Internal) (8081) is DOWN
+❌ OnlyOffice (Internal) (8082) is DOWN
+Pushing logs to git...

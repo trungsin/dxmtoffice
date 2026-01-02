@@ -1,0 +1,218 @@
+Starting Dev Deployment at 20260102-172139
+--- DXMT Dev Sanity Check ---
+Checking AI Gateway configuration...
+✅ AI Key appears configured.
+Checking running services...
+⚠️  dxmt-ai-service is NOT running.
+✅ nginx-proxy-manager is running.
+⚠️  mailcow-dockerized-nginx-mailcow-1 is NOT running.
+-----------------------------
+Deploying dev services...
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"GEMINI_API_KEY\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="/root/dxmtoffice/infrastructure/nginx/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBROOT\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBNAME\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBUSER\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBNAME\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBUSER\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBNAME\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBUSER\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBNAME\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBUSER\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBNAME\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBUSER\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBROOT\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBNAME\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBUSER\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"ADDITIONAL_SAN\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBNAME\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBUSER\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"DBROOT\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="The \"REDISPASS\" variable is not set. Defaulting to a blank string."
+time="2026-01-02T17:21:40+07:00" level=warning msg="/root/dxmtoffice/office/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Image dxmtoffice-ai-service Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 528B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 159B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 1.7s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 91B done
+#5 DONE 0.0s
+
+#6 [1/5] FROM docker.io/library/node:20-alpine@sha256:658d0f63e501824d6c23e06d4bb95c71e7d704537c9d9272f488ac03a370d448
+#6 resolve docker.io/library/node:20-alpine@sha256:658d0f63e501824d6c23e06d4bb95c71e7d704537c9d9272f488ac03a370d448 0.0s done
+#6 DONE 0.0s
+
+#7 [2/5] WORKDIR /app
+#7 CACHED
+
+#8 [3/5] COPY package*.json ./
+#8 CACHED
+
+#9 [4/5] RUN npm install
+#9 CACHED
+
+#10 [5/5] COPY . .
+#10 CACHED
+
+#11 exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:6567578e43b287366c198941a7f12f6e77a6d1c20b3aa308a718461ed5c5e153 done
+#11 exporting config sha256:e085b64a49927e2055ad3300acba799f9af9c826b85725dad9f1aaba7a660115 done
+#11 exporting attestation manifest sha256:f33b1e3cbbb40ef3fb44e1f1498d8b6698750cdb39d0ee6eb14ea5c5b32a9fc2 0.0s done
+#11 exporting manifest list sha256:889394b8df402ecad9132e31adb8527a2acd3c5f09fa686652e9efdf1b740a83 done
+#11 naming to docker.io/library/dxmtoffice-ai-service:latest done
+#11 unpacking to docker.io/library/dxmtoffice-ai-service:latest 0.0s done
+#11 DONE 0.1s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+ Image dxmtoffice-ai-service Built 
+ Network infrastructure_default Creating 
+ Network infrastructure_default Created 
+ Volume dxmtoffice_nextcloud_data Creating 
+ Volume dxmtoffice_nextcloud_data Created 
+ Volume dxmtoffice_nextcloud_db Creating 
+ Volume dxmtoffice_nextcloud_db Created 
+ Volume dxmtoffice_vmail-index-vol-1 Creating 
+ Volume dxmtoffice_vmail-index-vol-1 Created 
+ Volume dxmtoffice_postfix-vol-1 Creating 
+ Volume dxmtoffice_postfix-vol-1 Created 
+ Volume dxmtoffice_sogo-web-vol-1 Creating 
+ Volume dxmtoffice_sogo-web-vol-1 Created 
+ Volume dxmtoffice_sogo-userdata-backup-vol-1 Creating 
+ Volume dxmtoffice_sogo-userdata-backup-vol-1 Created 
+ Volume dxmtoffice_postfix-tlspol-vol-1 Creating 
+ Volume dxmtoffice_postfix-tlspol-vol-1 Created 
+ Volume dxmtoffice_crypt-vol-1 Creating 
+ Volume dxmtoffice_crypt-vol-1 Created 
+ Volume dxmtoffice_mysql-vol-1 Creating 
+ Volume dxmtoffice_mysql-vol-1 Created 
+ Volume dxmtoffice_mysql-socket-vol-1 Creating 
+ Volume dxmtoffice_mysql-socket-vol-1 Created 
+ Volume dxmtoffice_vmail-vol-1 Creating 
+ Volume dxmtoffice_vmail-vol-1 Created 
+ Volume dxmtoffice_redis-vol-1 Creating 
+ Volume dxmtoffice_redis-vol-1 Created 
+ Volume dxmtoffice_rspamd-vol-1 Creating 
+ Volume dxmtoffice_rspamd-vol-1 Created 
+ Volume dxmtoffice_clamd-db-vol-1 Creating 
+ Volume dxmtoffice_clamd-db-vol-1 Created 
+ Container dxmtoffice-memcached-mailcow-1 Creating 
+ Container dxmtoffice-dockerapi-mailcow-1 Creating 
+ Container dxmtoffice-netfilter-mailcow-1 Creating 
+ Container dxmtoffice-db-1 Creating 
+ Container dxmtoffice-unbound-mailcow-1 Creating 
+ Container dxmtoffice-nextcloud-redis-1 Creating 
+ Container dxmtoffice-nextcloud-db-1 Creating 
+ Container dxmtoffice-onlyoffice-app-1 Creating 
+ Container dxmtoffice-sogo-mailcow-1 Creating 
+ Container dxmtoffice-olefy-mailcow-1 Creating 
+ Container dxmt-ai-service Creating 
+time="2026-01-02T17:21:43+07:00" level=warning msg="mount of type `volume` should not define `bind` option"
+ Container dxmtoffice-netfilter-mailcow-1 Created 
+ Container dxmtoffice-redis-mailcow-1 Creating 
+ Container dxmtoffice-olefy-mailcow-1 Created 
+ Container dxmt-ai-service Created 
+ Container dxmtoffice-db-1 Created 
+ Container dxmtoffice-app-1 Creating 
+ Container dxmtoffice-dockerapi-mailcow-1 Created 
+ Container dxmtoffice-unbound-mailcow-1 Created 
+ Container dxmtoffice-mysql-mailcow-1 Creating 
+ Container dxmtoffice-clamd-mailcow-1 Creating 
+ Container dxmtoffice-postfix-tlspol-mailcow-1 Creating 
+time="2026-01-02T17:21:43+07:00" level=warning msg="mount of type `volume` should not define `bind` option"
+ Container dxmtoffice-sogo-mailcow-1 Created 
+ Container dxmtoffice-memcached-mailcow-1 Created 
+ Container dxmtoffice-nextcloud-db-1 Created 
+ Container dxmtoffice-nextcloud-redis-1 Created 
+ Container dxmtoffice-nextcloud-app-1 Creating 
+ Container dxmtoffice-redis-mailcow-1 Created 
+ Container dxmtoffice-php-fpm-mailcow-1 Creating 
+time="2026-01-02T17:21:43+07:00" level=warning msg="mount of type `volume` should not define `bind` option"
+ Container dxmtoffice-clamd-mailcow-1 Created 
+ Container dxmtoffice-postfix-tlspol-mailcow-1 Created 
+ Container dxmtoffice-mysql-mailcow-1 Created 
+ Container dxmtoffice-postfix-mailcow-1 Creating 
+time="2026-01-02T17:21:43+07:00" level=warning msg="mount of type `volume` should not define `bind` option"
+ Container dxmtoffice-dovecot-mailcow-1 Creating 
+time="2026-01-02T17:21:43+07:00" level=warning msg="mount of type `volume` should not define `bind` option"
+ Container dxmtoffice-app-1 Created 
+ Container dxmtoffice-nextcloud-app-1 Created 
+ Container dxmtoffice-nextcloud-web-1 Creating 
+ Container dxmtoffice-postfix-mailcow-1 Created 
+ Container dxmtoffice-php-fpm-mailcow-1 Created 
+ Container dxmtoffice-dovecot-mailcow-1 Created 
+ Container dxmtoffice-rspamd-mailcow-1 Creating 
+ Container dxmtoffice-ofelia-mailcow-1 Creating 
+ Container dxmtoffice-nextcloud-web-1 Created 
+ Container dxmtoffice-ofelia-mailcow-1 Created 
+ Container dxmtoffice-rspamd-mailcow-1 Created 
+ Container dxmtoffice-nginx-mailcow-1 Creating 
+ Container dxmtoffice-nginx-mailcow-1 Created 
+ Container dxmtoffice-acme-mailcow-1 Creating 
+time="2026-01-02T17:21:43+07:00" level=warning msg="mount of type `volume` should not define `bind` option"
+ Container dxmtoffice-acme-mailcow-1 Created 
+ Container dxmtoffice-watchdog-mailcow-1 Creating 
+time="2026-01-02T17:21:43+07:00" level=warning msg="mount of type `volume` should not define `bind` option"
+ Container dxmtoffice-watchdog-mailcow-1 Created 
+ Container dxmtoffice-onlyoffice-app-1 Created 
+ Container dxmtoffice-nextcloud-db-1 Starting 
+ Container dxmt-ai-service Starting 
+ Container dxmtoffice-olefy-mailcow-1 Starting 
+ Container dxmtoffice-nextcloud-redis-1 Starting 
+ Container dxmtoffice-dockerapi-mailcow-1 Starting 
+ Container dxmtoffice-onlyoffice-app-1 Starting 
+ Container dxmtoffice-memcached-mailcow-1 Starting 
+ Container dxmtoffice-sogo-mailcow-1 Starting 
+ Container dxmtoffice-db-1 Starting 
+ Container dxmtoffice-netfilter-mailcow-1 Starting 
+ Container dxmtoffice-unbound-mailcow-1 Starting 
+ Container dxmtoffice-db-1 Started 
+ Container dxmtoffice-netfilter-mailcow-1 Started 
+ Container dxmtoffice-nextcloud-db-1 Started 
+ Container dxmtoffice-memcached-mailcow-1 Started 
+ Container dxmtoffice-dockerapi-mailcow-1 Started 
+ Container dxmtoffice-olefy-mailcow-1 Started 
+ Container dxmt-ai-service Started 
+ Container dxmtoffice-nextcloud-redis-1 Started 
+ Container dxmtoffice-onlyoffice-app-1 Started 
+Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error mounting "/root/dxmtoffice/mailcow/data/conf/unbound/unbound.conf" to rootfs at "/etc/unbound/unbound.conf": mount src=/root/dxmtoffice/mailcow/data/conf/unbound/unbound.conf, dst=/etc/unbound/unbound.conf, dstFd=/proc/thread-self/fd/12, flags=MS_BIND|MS_REC: not a directory: Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type
+Running Healthchecks...
+✅ Nginx Proxy Manager (80) is UP
+✅ SSL Gateway (443) is UP
+❌ Postfix (SMTP) (25) is DOWN
+❌ Submission (SMTP) (587) is DOWN
+❌ IMAP (Secure) (993) is DOWN
+❌ Mailcow UI (Internal) (8080) is DOWN
+❌ Nextcloud (Internal) (8081) is DOWN
+✅ OnlyOffice (Internal) (8082) is UP
+Archiving log to history branch...
