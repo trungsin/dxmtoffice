@@ -70,4 +70,3 @@ volumes:
 networks:
   office-network:
   infrastructure_default:
-    external: true

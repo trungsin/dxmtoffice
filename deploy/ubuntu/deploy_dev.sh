@@ -40,7 +40,7 @@ echo "Archiving log to history branch..." | tee -a "$LOG_FILE"
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git checkout -B logs/dev-deploy-history
 cp "$LOG_FILE" deploy/logs/dev/latest-summary.log
-git add deploy/logs/dev/
+git add -f deploy/logs/dev/
 git commit -m "chore(log): dev deploy log $TIMESTAMP"
 git push origin logs/dev-deploy-history --force
 git checkout $CURRENT_BRANCH

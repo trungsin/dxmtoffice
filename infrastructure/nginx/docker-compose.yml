@@ -18,6 +18,8 @@ services:
       DB_MYSQL_NAME: "npm"
     depends_on:
       - db
+    networks:
+      - infrastructure_default
 
   db:
     image: 'jc21/mariadb-aria:latest'
@@ -29,3 +31,9 @@ services:
       MYSQL_PASSWORD: 'npm'
     volumes:
       - ./mysql:/var/lib/mysql
+    networks:
+      - infrastructure_default
+
+networks:
+  infrastructure_default:
+    name: infrastructure_default
