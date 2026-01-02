@@ -1,8 +1,7 @@
 include:
   - infrastructure/nginx/docker-compose.yml
   - mailcow/docker-compose.yml
-  - office/nextcloud/docker-compose.yml
-  - office/onlyoffice/docker-compose.yml
+  - office/docker-compose.yml
 
 services:
   ai-service:
