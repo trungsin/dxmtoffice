@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+LOG_FILE="deploy/logs/dev/deploy-$TIMESTAMP.log"
+
 # Ensure log directories exist
 mkdir -p deploy/logs/dev
 

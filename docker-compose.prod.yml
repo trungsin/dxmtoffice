@@ -10,8 +10,7 @@ services:
     restart: always
     environment:
       - DEV_MODE=false
-      - AI_PROVIDER=${AI_PROVIDER:-openai}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AI_LOG_ENABLED=true
     networks:
       - infrastructure_default
