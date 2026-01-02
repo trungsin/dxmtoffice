@@ -9,14 +9,20 @@
 mailcow/mailcow.conf
 mailcow/.env
 
-# Local AI/Dev logs
-deployment/logs/dev/*
-deployment/logs/prod/*
-!deployment/logs/dev/system-summary.log
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+deploy/logs/
+deploy/logs/dev/
+deploy/logs/prod/
+!deploy/logs/dev/latest-summary.log
+*.log
 
 # System
 .DS_Store
 node_modules/
 dist/
-.env
-*.log
+/tmp/
