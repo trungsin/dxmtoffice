@@ -4,6 +4,9 @@ set -e
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 LOG_FILE="deploy/logs/dev/deploy-$TIMESTAMP.log"
 
+# Ensure log directories exist
+mkdir -p deploy/logs/dev
+
 echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 
 # Pre-flight check

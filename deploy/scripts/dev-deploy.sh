@@ -4,6 +4,9 @@ set -e
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 LOG_FILE="deploy/logs/dev/deploy-$TIMESTAMP.log"
 
+# Ensure log directories exist
+mkdir -p deploy/logs/dev deploy/logs/ai-context
+
 echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 
 # Load environment

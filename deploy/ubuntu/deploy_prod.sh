@@ -7,6 +7,9 @@ if [ -f .env.prod ]; then
     export $(grep -v '^#' .env.prod | xargs)
 fi
 
+# Ensure log directories exist
+mkdir -p deploy/logs/prod
+
 echo "Starting Production Deployment..."
 
 # Deploy with production compose
