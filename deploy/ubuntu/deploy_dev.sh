@@ -96,8 +96,19 @@ echo "Deploying dev services..." | tee -a "$LOG_FILE"
 echo "Stopping existing containers..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.dev.yml down 2>&1 | tee -a "$LOG_FILE" || true
 
-# Step 2: Aggressive cleanup of Docker-created directories
-echo "Cleaning Docker artifacts..." | tee -a "$LOG_FILE"
+# Step 2: Clean up old Docker resources to prevent network conflicts
+echo "Cleaning up old Docker networks and containers..." | tee -a "$LOG_FILE"
+
+# Remove old project containers (dxmtoffice prefix)
+docker ps -a --filter "name=dxmtoffice-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
+docker ps -a --filter "name=dxmt-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
+
+# Remove old project networks  
+docker network ls --filter "name=dxmtoffice_" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
+docker network ls --filter "name=mailcowdockerized_" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
+
+# Step 3: Aggressive cleanup of Docker-created directories
+echo "Cleaning Docker file artifacts..." | tee -a "$LOG_FILE"
 find mailcow/data/conf -type d -empty -delete 2>/dev/null || true
 
 # Remove specific known problematic paths if they exist as directories
@@ -116,7 +127,7 @@ for path in \
     fi
 done
 
-# Step 3: Now start containers (restore already ran earlier)
+# Step 4: Now start containers (restore already ran earlier)
 docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
 # Healthcheck
