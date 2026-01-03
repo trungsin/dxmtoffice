@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 LOG_FILE="deploy/logs/dev/deploy-$TIMESTAMP.log"
@@ -121,7 +122,17 @@ docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
 # Healthcheck
 ./deploy/scripts/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
-    echo "Healthcheck FAILED. Reverting..." | tee -a "$LOG_FILE"
+    echo "❌ Healthcheck FAILED. Gathering diagnostics..." | tee -a "$LOG_FILE"
+    
+    echo "=== Current Docker Networks ===" | tee -a "$LOG_FILE"
+    docker network ls --format "table {{.Name}}\t{{.Driver}}\t{{.Scope}}" | tee -a "$LOG_FILE"
+    
+    echo "=== Network Subnets ===" | tee -a "$LOG_FILE"
+    docker network ls -q | xargs docker network inspect --format '{{.Name}}: {{range .IPAM.Config}}{{.Subnet}}{{end}}' | tee -a "$LOG_FILE"
+    
+    echo "=== Container Status ===" | tee -a "$LOG_FILE"
+    docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | tee -a "$LOG_FILE"
+
     ./deploy/scripts/rollback.sh
     exit 1
 }

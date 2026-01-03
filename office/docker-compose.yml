@@ -69,4 +69,8 @@ volumes:
 
 networks:
   office-network:
+    ipam:
+      config:
+        - subnet: 172.31.1.0/24
   infrastructure_default:
+    external: true
