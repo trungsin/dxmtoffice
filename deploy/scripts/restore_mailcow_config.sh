@@ -26,22 +26,25 @@ function cleanup_and_create() {
 }
 
 # 0. Core Data Repair (Web/Assets/Conf)
-if [ ! -d "$CONF_DIR/../web" ] || [ ! -d "$CONF_DIR/../assets" ] || [ ! -f "$CONF_DIR/unbound/unbound.conf" ]; then
-    echo "⚠️  Missing core Mailcow data or configs. Attempting auto-repair..."
+# Trigger repair if directories are missing or empty
+if [ ! -d "$CONF_DIR/../web" ] || [ ! "$(ls -A "$CONF_DIR/../web" 2>/dev/null)" ] || \
+   [ ! -d "$CONF_DIR/../assets" ] || [ ! "$(ls -A "$CONF_DIR/../assets" 2>/dev/null)" ] || \
+   [ ! -f "$CONF_DIR/unbound/unbound.conf" ]; then
+    
+    echo "⚠️  Missing or empty core Mailcow data/configs. Attempting auto-repair..."
     TMP_DIR=$(mktemp -d)
     
     echo "Cloning core files from upstream..."
     git clone --depth 1 https://github.com/mailcow/mailcow-dockerized "$TMP_DIR"
     
-    if [ ! -d "$CONF_DIR/../web" ]; then
-        echo "Restoring data/web..."
-        cp -r "$TMP_DIR/data/web" "$CONF_DIR/../"
-    fi
+    # Use cp -a to merge content into existing directories if they exist
+    echo "Restoring data/web..."
+    mkdir -p "$CONF_DIR/../web"
+    cp -a "$TMP_DIR/data/web/." "$CONF_DIR/../web/"
     
-    if [ ! -d "$CONF_DIR/../assets" ]; then
-        echo "Restoring data/assets..."
-        cp -r "$TMP_DIR/data/assets" "$CONF_DIR/../"
-    fi
+    echo "Restoring data/assets..."
+    mkdir -p "$CONF_DIR/../assets"
+    cp -a "$TMP_DIR/data/assets/." "$CONF_DIR/../assets/"
 
     if [ ! -f "$CONF_DIR/unbound/unbound.conf" ]; then
         echo "Restoring data/conf defaults (Unbound)..."
