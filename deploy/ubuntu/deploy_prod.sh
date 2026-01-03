@@ -18,6 +18,9 @@ mkdir -p deploy/logs/prod
 
 echo "Starting Production Deployment..."
 
+# Restore missing Mailcow configs
+./deploy/scripts/restore_mailcow_config.sh
+
 # Deploy with production compose
 docker compose -f docker-compose.prod.yml up -d --build
 

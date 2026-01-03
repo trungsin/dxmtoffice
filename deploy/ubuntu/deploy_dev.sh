@@ -19,6 +19,9 @@ echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 # Pre-flight check
 ./deploy/ubuntu/dev_sanity_check.sh | tee -a "$LOG_FILE"
 
+# Restore missing Mailcow configs (idempotent)
+./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
+
 # Load environment
 if [ -f .env.dev ]; then
     export $(grep -v '^#' .env.dev | xargs)
