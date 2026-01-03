@@ -33,13 +33,9 @@ fi
 # Load mailcow.conf
 if [ -f mailcow/mailcow.conf ]; then
     echo "Loading Mailcow configuration..." | tee -a "$LOG_FILE"
-    while IFS= read -r line; do
-        [[ "$line" =~ ^#.*$ ]] && continue
-        [[ -z "$line" ]] && continue
-        if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*= ]]; then
-            export "$line"
-        fi
-    done < mailcow/mailcow.conf
+    set -a
+    source mailcow/mailcow.conf
+    set +a
 fi
 
 # Verify critical variables are set
