@@ -61,7 +61,9 @@ done
 for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-" "infrastructure_" "onemail_" "office_" "valentine_"; do
     docker network ls --filter "name=$pref" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
 done
+
 docker network rm infrastructure_default 2>/dev/null || true
+docker network create --subnet 172.29.1.0/24 infrastructure_default 2>/dev/null || true
 docker network prune -f 2>&1 | tee -a "$LOG_FILE" || true
 
 # 4. Host-Level Environment Recovery (DNS/Ports/Firewall)
