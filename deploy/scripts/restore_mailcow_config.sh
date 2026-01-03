@@ -20,6 +20,28 @@ function cleanup_and_create() {
     fi
 }
 
+# 0. Core Data Repair (Web/Assets)
+if [ ! -d "$CONF_DIR/../web" ] || [ ! -d "$CONF_DIR/../assets" ]; then
+    echo "⚠️  Missing core Mailcow data (web/assets). Attempting auto-repair..."
+    TMP_DIR=$(mktemp -d)
+    
+    echo "Cloning core files from upstream..."
+    git clone --depth 1 https://github.com/mailcow/mailcow-dockerized "$TMP_DIR"
+    
+    if [ ! -d "$CONF_DIR/../web" ]; then
+        echo "Restoring data/web..."
+        cp -r "$TMP_DIR/data/web" "$CONF_DIR/../"
+    fi
+    
+    if [ ! -d "$CONF_DIR/../assets" ]; then
+        echo "Restoring data/assets..."
+        cp -r "$TMP_DIR/data/assets" "$CONF_DIR/../"
+    fi
+    
+    rm -rf "$TMP_DIR"
+    echo "✅ Core data restored."
+fi
+
 # 1. Unbound
 cleanup_and_create "$CONF_DIR/unbound/unbound.conf"
 cat > "$CONF_DIR/unbound/unbound.conf" <<EOF
