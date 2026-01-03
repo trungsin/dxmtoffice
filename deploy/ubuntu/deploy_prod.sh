@@ -48,6 +48,12 @@ if [ -f /etc/systemd/resolved.conf ] && grep -q "DNSStubListener=yes" /etc/syste
     echo "Disabling systemd-resolved DNSStubListener..."
     sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
     systemctl restart systemd-resolved || true
+    
+    # Ensure DNS works after disabling stub
+    echo "Updating /etc/resolv.conf to use Google DNS..."
+    rm -f /etc/resolv.conf
+    echo "nameserver 8.8.8.8" > /etc/resolv.conf
+    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 fi
 
 if command -v lsof >/dev/null && lsof -Pi :80,443 -sTCP:LISTEN -t >/dev/null; then

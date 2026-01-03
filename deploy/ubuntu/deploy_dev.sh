@@ -116,10 +116,18 @@ echo "Ensuring host ports 53, 80, 443 are free..." | tee -a "$LOG_FILE"
 
 # Port 53 (Unbound)
 if [ -f /etc/systemd/resolved.conf ] && grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null; then
-    echo "Disabling systemd-resolved DNSStubListener..." | tee -a "$LOG_FILE"
+    echo "Disabling systemd-resolved DNSStubListener to free port 53..." | tee -a "$LOG_FILE"
     sed -i 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
     sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
     systemctl restart systemd-resolved || true
+    
+    # After disabling stub, /etc/resolv.conf pointing to 127.0.0.53 will break DNS.
+    # We must ensure it points to a working nameserver.
+    echo "Updating /etc/resolv.conf to use Google DNS... (to let Docker pull images)" | tee -a "$LOG_FILE"
+    # Remove symlink if it exists and write fresh file
+    rm -f /etc/resolv.conf
+    echo "nameserver 8.8.8.8" > /etc/resolv.conf
+    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 fi
 
 # Port 80/443 (NPM)
