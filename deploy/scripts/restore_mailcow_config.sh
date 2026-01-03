@@ -59,8 +59,6 @@ server:
   use-syslog: no
   hide-identity: yes
   hide-version: yes
-  local-zone: "mail.feelmagic.store." static
-  local-data: "mail.feelmagic.store. IN A 127.0.0.1"
 EOF
 
 # 2. Redis
