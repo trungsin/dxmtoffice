@@ -35,10 +35,5 @@ services:
     ports:
       - "8082:80"
 
-networks:
-  infrastructure_default:
-    external: true
-  mailcow-network:
-    external: true
-  office-network:
-    external: true
+# Note: Networks are defined in the included files.
+# No need to redeclare them here as external.
