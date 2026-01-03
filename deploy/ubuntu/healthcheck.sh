@@ -1,36 +1,25 @@
 #!/bin/bash
-# healthcheck.sh - Verify system health
-
+# healthcheck.sh - Unified Healthcheck
 echo "--- DXMT Healthcheck ---"
 
-# Check Exposed Ports (Public)
-EXPOSED_PORTS=(80 443 25 587 993 3000)
-for PORT in "${EXPOSED_PORTS[@]}"; do
-  if nc -z localhost $PORT 2>/dev/null; then
-    echo "✅ Port $PORT (Public) is OPEN"
-  else
-    echo "❌ Port $PORT (Public) is CLOSED"
-  fi
-done
+check_port() {
+    local port=$1
+    local name=$2
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null ; then
+        echo "✅ $name ($port) is UP"
+    else
+        echo "❌ $name ($port) is DOWN"
+    fi
+}
 
-# Check Internal Dev Ports (Mapped for local testing)
-INTERNAL_PORTS=(8080 8081 8082)
-for PORT in "${INTERNAL_PORTS[@]}"; do
-  if nc -z localhost $PORT 2>/dev/null; then
-    echo "✅ Port $PORT (Internal) is UP"
-  else
-    echo "⚠️  Port $PORT (Internal) is DOWN (Check Nginx Proxy)"
-  fi
-done
-
-# Check Container Health
-SERVICES=("dxmt-ai-service" "nginx-proxy-manager" "mailcow-dockerized-nginx-mailcow-1")
-for SVC in "${SERVICES[@]}"; do
-  if docker ps | grep -q "$SVC"; then
-    echo "✅ Service $SVC is RUNNING"
-  else
-    echo "❌ Service $SVC is NOT DETECTED"
-  fi
-done
+check_port 80 "Nginx Proxy Manager"
+check_port 443 "SSL Gateway"
+check_port 25 "Postfix (SMTP)"
+check_port 587 "Submission (SMTP)"
+check_port 993 "IMAP (Secure)"
+check_port 8080 "Mailcow UI (Internal)"
+check_port 8081 "Nextcloud (Internal)"
+check_port 8082 "OnlyOffice (Internal)"
+check_port 3000 "AI Service (Internal)"
 
 echo "-----------------------"

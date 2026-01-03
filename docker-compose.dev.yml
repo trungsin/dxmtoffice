@@ -15,5 +15,30 @@ services:
       - AI_LOG_ENABLED=true
     networks:
       - infrastructure_default
-  # Dev overrides for easier local testing (bypass Nginx if needed)
-  # Actual production traffic goes through NPM on 80/443
+
+  # Mailcow Port Overrides to avoid conflicts on 80/443
+  nginx-mailcow:
+    ports:
+      - "8080:80"
+      - "8443:443"
+
+  sogo-mailcow:
+    ports:
+      - "9081:20000"
+
+  # Office Port Overrides
+  nextcloud-web:
+    ports:
+      - "8081:80"
+
+  onlyoffice-app:
+    ports:
+      - "8082:80"
+
+networks:
+  infrastructure_default:
+    external: true
+  mailcow-network:
+    external: true
+  office-network:
+    external: true

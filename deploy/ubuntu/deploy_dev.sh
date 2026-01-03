@@ -17,13 +17,13 @@ fi
 
 echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 
-# Pre-flight check
+# 1. Pre-flight check
 ./deploy/ubuntu/dev_sanity_check.sh | tee -a "$LOG_FILE"
 
-# Restore missing Mailcow configs (idempotent)
+# 2. Restore missing Mailcow configs (idempotent)
 ./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
 
-# Load environment variables properly
+# 3. Load Environment Variables
 echo "Loading environment variables..." | tee -a "$LOG_FILE"
 
 # Load .env.dev
@@ -33,208 +33,106 @@ if [ -f .env.dev ]; then
     set +a
 fi
 
-# Generate mailcow.conf if it doesn't exist
-if [ ! -f mailcow/mailcow.conf ]; then
-    echo "⚠️  mailcow.conf not found, generating..." | tee -a "$LOG_FILE"
-    
-    # Save current directory
-    ORIGINAL_DIR=$(pwd)
-    
-    # Run generate script from mailcow directory
-    cd mailcow || { echo "ERROR: Cannot cd to mailcow/"; exit 1; }
-    
-    if [ -f generate_config.sh ]; then
-        # Run with ./generate_config.sh instead of bash to preserve script context
-        ./generate_config.sh || {
-            cd "$ORIGINAL_DIR"
-            echo "ERROR: generate_config.sh failed!" | tee -a "$LOG_FILE"
-            exit 1
-        }
-        cd "$ORIGINAL_DIR"
-        echo "✅ mailcow.conf generated" | tee -a "$LOG_FILE"
-    else
-        cd "$ORIGINAL_DIR"
-        echo "ERROR: Cannot generate mailcow.conf - generate_config.sh not found!" | tee -a "$LOG_FILE"
-        exit 1
-    fi
-fi
-
-# Load mailcow.conf (using robust grep + export method)
+# Load mailcow.conf
 if [ -f mailcow/mailcow.conf ]; then
     echo "Loading Mailcow configuration..." | tee -a "$LOG_FILE"
-    
-    # Extract only valid KEY=VALUE lines and export them
     while IFS= read -r line; do
-        # Skip comments and empty lines
         [[ "$line" =~ ^#.*$ ]] && continue
         [[ -z "$line" ]] && continue
-        
-        # Only process lines with KEY=VALUE format
         if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*= ]]; then
             export "$line"
         fi
     done < mailcow/mailcow.conf
-    
-    echo "Loaded env vars from mailcow.conf" | tee -a "$LOG_FILE"
 fi
 
 # Verify critical variables are set
 if [ -z "$DBNAME" ] || [ -z "$DBPASS" ] || [ -z "$REDISPASS" ]; then
     echo "ERROR: Critical environment variables not loaded!" | tee -a "$LOG_FILE"
-    echo "DBNAME='$DBNAME', DBPASS='$DBPASS', REDISPASS='$REDISPASS'" | tee -a "$LOG_FILE"
-    
-    # Debug: show what's in mailcow.conf
-    echo "=== Debugging mailcow.conf ===" | tee -a "$LOG_FILE"
-    grep -E "^(DBNAME|DBPASS|REDISPASS)=" mailcow/mailcow.conf | tee -a "$LOG_FILE"
-    
     exit 1
 fi
 
-# Deploy services
-echo "Deploying dev services..." | tee -a "$LOG_FILE"
-
-# Step 1: Stop all containers first to prevent directory recreation
+# 4. Cleanup and Conflict Resolution
 echo "Stopping existing containers..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.dev.yml down 2>&1 | tee -a "$LOG_FILE" || true
 
-# Step 2: Clean up old Docker resources to prevent network conflicts
-echo "Cleaning up old Docker networks and containers..." | tee -a "$LOG_FILE"
+echo "Cleaning up Docker resources..." | tee -a "$LOG_FILE"
+# Remove any container with known prefixes or suffixes
+for prefix in "dxmt-" "dxmtoffice-" "mailcowdockerized-" "mailcow-"; do
+    docker ps -a --filter "name=$prefix" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
+done
 
-# Remove old project containers (all potential prefixes)
-docker ps -a --filter "name=dxmtoffice-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
-docker ps -a --filter "name=dxmt-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
-docker ps -a --filter "name=mailcowdockerized-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
-docker ps -a --filter "name=mailcow-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
+# Remove networks
+for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-"; do
+    docker network ls --filter "name=$pref" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
+done
 
-# Remove old project networks  
-docker network ls --filter "name=dxmtoffice_" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
-docker network ls --filter "name=mailcowdockerized_" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
-docker network ls --filter "name=mailcow-" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
+# 5. Host-Level Environment Recovery (DNS/Ports/Firewall)
+echo "Ensuring host environment is ready..." | tee -a "$LOG_FILE"
 
-# Step 2.5: Handle host port conflicts (Port 53, 80, 443)
-echo "Ensuring host ports 53, 80, 443 are free..." | tee -a "$LOG_FILE"
-
-# Step 2.5: Handle host port conflicts (Port 53, 80, 443) and Firewall
-echo "Ensuring host ports 53, 80, 443 are free and firewall is configured..." | tee -a "$LOG_FILE"
-
-# 1. Force DNS Fix (Aggressive)
-echo "Forcing host DNS to Google (8.8.8.8)..." | tee -a "$LOG_FILE"
+# 5.1 Force DNS Fix (Aggressive)
+echo "Configuring host DNS (8.8.8.8)..." | tee -a "$LOG_FILE"
 systemctl stop systemd-resolved 2>/dev/null || true
 systemctl disable systemd-resolved 2>/dev/null || true
 rm -f /etc/resolv.conf
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 
-# 2. Open Firewall Ports (UFW)
+# 5.2 Configure Firewall (UFW)
 if command -v ufw >/dev/null; then
-    echo "Configuring UFW firewall..." | tee -a "$LOG_FILE"
-    # Ensure UFW is enabled first
+    echo "Configuring UFW..." | tee -a "$LOG_FILE"
     ufw --force enable || true
-    # Basic Web
     for port in 80 443 25 465 587 110 143 993 995 4190 53 8080 8081 8082 3000; do
-        ufw allow "$port"/tcp || true
+        ufw allow "$port"/tcp >/dev/null || true
     done
-    ufw allow 53/udp || true
-    echo "✅ UFW ports opened." | tee -a "$LOG_FILE"
+    ufw allow 53/udp >/dev/null || true
 fi
 
-# 3. EXTREME Port Clearing (80, 443, 53)
-echo "Killing any process or container on ports 80, 443, 53..." | tee -a "$LOG_FILE"
-# First, find and kill containers publishing these ports
+# 5.3 Force Port Clearing (80, 443, 53)
+echo "Killing any process on ports 80, 443, 53..." | tee -a "$LOG_FILE"
+# First, find and kill containers publishing these ports (any project)
 for port in 80 443 53; do
-    CONFLICT_CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
-    if [ -n "$CONFLICT_CONTAINERS" ]; then
-        echo "Removing containers using port $port: $CONFLICT_CONTAINERS" | tee -a "$LOG_FILE"
-        docker rm -f $CONFLICT_CONTAINERS || true
+    CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
+    if [ -n "$CONTAINERS" ]; then
+        docker rm -f $CONTAINERS || true
     fi
-done
-
-# Second, kill host processes using ss/fuser fallback
-for port in 80 443 53; do
-    if command -v ss >/dev/null; then
-        PIDS=$(ss -tlpn "sport = :$port" | grep -oP 'pid=\K[0-9]+' | sort -u)
-        if [ -n "$PIDS" ]; then
-            echo "Killing PIDs on port $port: $PIDS" | tee -a "$LOG_FILE"
-            echo "$PIDS" | xargs kill -9 2>/dev/null || true
-        fi
-    fi
-    # Fallback to fuser
+    # Use fuser as the primary host-process killer
     if command -v fuser >/dev/null; then
         fuser -k "$port"/tcp 2>/dev/null || true
         [ "$port" == "53" ] && fuser -k 53/udp 2>/dev/null || true
     fi
 done
+sleep 2
 
-# Wait for ports to settle
-echo "Waiting for ports to be released..." | tee -a "$LOG_FILE"
-sleep 3
-
-# Step 3: Aggressive cleanup of Docker-created directories
-echo "Cleaning Docker file artifacts..." | tee -a "$LOG_FILE"
+# 6. Final Data Cleanup
+echo "Cleaning file artifacts..." | tee -a "$LOG_FILE"
 find mailcow/data/conf -type d -empty -delete 2>/dev/null || true
-
-# Remove specific known problematic paths if they exist as directories
-for path in \
-    "mailcow/data/conf/unbound/unbound.conf" \
-    "mailcow/data/conf/redis/redis-conf.sh" \
-    "mailcow/data/conf/sogo/custom-favicon.ico" \
-    "mailcow/data/conf/sogo/custom-fulllogo.svg" \
-    "mailcow/data/conf/sogo/custom-fulllogo.png" \
-    "mailcow/data/conf/sogo/custom-shortlogo.svg" \
-    "mailcow/data/conf/sogo/custom-theme.js" \
-    "mailcow/data/conf/sogo/custom-sogo.js"; do
-    if [ -d "$path" ]; then
-        echo "Removing bad directory: $path" | tee -a "$LOG_FILE"
-        rm -rf "$path"
-    fi
+for path in "mailcow/data/conf/unbound/unbound.conf" "mailcow/data/conf/redis/redis-conf.sh"; do
+    [ -d "$path" ] && rm -rf "$path"
 done
 
-# Step 4: Now start containers (restore already ran earlier)
+# 7. Start Services
+echo "Deploying services fresh..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
-# Healthcheck
+# 8. Healthcheck
+echo "Verifying deployment..." | tee -a "$LOG_FILE"
 ./deploy/scripts/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
     echo "❌ Healthcheck FAILED. Gathering diagnostics..." | tee -a "$LOG_FILE"
-    
-    echo "=== Current Docker Networks ===" | tee -a "$LOG_FILE"
-    docker network ls --format "table {{.Name}}\t{{.Driver}}\t{{.Scope}}" | tee -a "$LOG_FILE"
-    
-    echo "=== Network Subnets ===" | tee -a "$LOG_FILE"
-    docker network ls -q | xargs docker network inspect --format '{{.Name}}: {{range .IPAM.Config}}{{.Subnet}}{{end}}' | tee -a "$LOG_FILE"
-    
-    echo "=== Container Status ===" | tee -a "$LOG_FILE"
     docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | tee -a "$LOG_FILE"
-
-    ./deploy/scripts/rollback.sh
     exit 1
 }
 
-# Log Management: Push to history branch
-# Log Management: Push to history branch (Optional)
+# 9. Log Archive
 if [ "${GIT_PUSH_LOG:-true}" = "true" ]; then
-    echo "Archiving log to history branch..." | tee -a "$LOG_FILE"
+    echo "Archiving logs..." | tee -a "$LOG_FILE"
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    
-    # Try to checkout or creating branch
     if git checkout -B logs/dev-deploy-history; then
         cp "$LOG_FILE" deploy/logs/dev/latest-summary.log
         git add -f deploy/logs/dev/
         git commit -m "chore(log): dev deploy log $TIMESTAMP"
-        
-        # Non-blocking push
-        if git push origin logs/dev-deploy-history --force; then
-            echo "✅ Logs pushed to GitHub." | tee -a "$LOG_FILE"
-        else
-            echo "⚠️  Git push failed (Permission/Auth). Skipping log archive." | tee -a "$LOG_FILE"
-        fi
-        
-        # Return to previous branch
-        git checkout $CURRENT_BRANCH
-    else
-        echo "⚠️  Failed to switch git branch. Skipping log archive." | tee -a "$LOG_FILE"
+        git push origin logs/dev-deploy-history --force || true
+        git checkout "$CURRENT_BRANCH"
     fi
-else
-    echo "Skipping log push (GIT_PUSH_LOG is disabled)." | tee -a "$LOG_FILE"
 fi
 
-echo "Dev Deployment completed successfully." | tee -a "$LOG_FILE"
+echo "Done. Deployment finished successfully." | tee -a "$LOG_FILE"
