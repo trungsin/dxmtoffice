@@ -32,18 +32,34 @@ if [ -f .env.dev ]; then
     set +a
 fi
 
-# Load mailcow.conf (using source instead of grep to handle multi-line values)
+# Load mailcow.conf (using robust grep + export method)
 if [ -f mailcow/mailcow.conf ]; then
     echo "Loading Mailcow configuration..." | tee -a "$LOG_FILE"
-    set -a
-    source mailcow/mailcow.conf
-    set +a
+    
+    # Extract only valid KEY=VALUE lines and export them
+    while IFS= read -r line; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^#.*$ ]] && continue
+        [[ -z "$line" ]] && continue
+        
+        # Only process lines with KEY=VALUE format
+        if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*= ]]; then
+            export "$line"
+        fi
+    done < mailcow/mailcow.conf
+    
+    echo "Loaded env vars from mailcow.conf" | tee -a "$LOG_FILE"
 fi
 
 # Verify critical variables are set
 if [ -z "$DBNAME" ] || [ -z "$DBPASS" ] || [ -z "$REDISPASS" ]; then
     echo "ERROR: Critical environment variables not loaded!" | tee -a "$LOG_FILE"
-    echo "DBNAME=$DBNAME, DBPASS=$DBPASS, REDISPASS=$REDISPASS" | tee -a "$LOG_FILE"
+    echo "DBNAME='$DBNAME', DBPASS='$DBPASS', REDISPASS='$REDISPASS'" | tee -a "$LOG_FILE"
+    
+    # Debug: show what's in mailcow.conf
+    echo "=== Debugging mailcow.conf ===" | tee -a "$LOG_FILE"
+    grep -E "^(DBNAME|DBPASS|REDISPASS)=" mailcow/mailcow.conf | tee -a "$LOG_FILE"
+    
     exit 1
 fi
 
