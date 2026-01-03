@@ -9,7 +9,26 @@ LOG_FILE="deploy/logs/prod/deploy-$TIMESTAMP.log"
 # Ensure log directories exist
 mkdir -p deploy/logs/prod
 
-# 1. Load Environment Variables (Needed for cleanup and restoration)
+# 1. Setup Logging Redirection
+exec > >(tee -i "$LOG_FILE") 2>&1
+
+echo "Starting Production Deployment at $(date)"
+echo "Log file: $LOG_FILE"
+echo ""
+
+# Function to run on error
+on_error() {
+    echo ""
+    echo "❌ ERROR DETECTED! Running diagnostics..."
+    chmod +x ./deploy/ubuntu/diagnostics.sh
+    ./deploy/ubuntu/diagnostics.sh
+    echo "❌ Deployment failed. Check the logs above."
+    exit 1
+}
+
+trap on_error ERR
+
+# 2. Load Environment Variables
 echo "Loading environment variables..." | tee -a "$LOG_FILE"
 
 # Set Project Name explicitly to avoid project-prefixed network conflicts
@@ -97,11 +116,15 @@ done
 echo "Deploying production services..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.prod.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
-# 6. Healthcheck
 ./deploy/ubuntu/healthcheck.sh || {
-    echo "Production Healthcheck FAILED. Triggering Rollback..." | tee -a "$LOG_FILE"
+    echo "Production Healthcheck FAILED. Triggering diagnostics and rollback..."
+    chmod +x ./deploy/ubuntu/diagnostics.sh
+    ./deploy/ubuntu/diagnostics.sh
     ./deploy/scripts/rollback.sh
     exit 1
 }
 
-echo "Production Deployment successful." | tee -a "$LOG_FILE"
+echo ""
+echo "=========================================="
+echo "✅ Production Deployment successful."
+echo "=========================================="

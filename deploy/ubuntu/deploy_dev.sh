@@ -8,6 +8,26 @@ LOG_FILE="deploy/logs/dev/deploy-$TIMESTAMP.log"
 # Ensure log directories exist
 mkdir -p deploy/logs/dev
 
+# 1. Setup Logging Redirection
+exec > >(tee -i "$LOG_FILE") 2>&1
+
+echo "Starting Dev Deployment at $(date)"
+echo "Log file: $LOG_FILE"
+echo ""
+
+# Function to run on error
+on_error() {
+    echo ""
+    echo "❌ ERROR DETECTED! Running diagnostics..."
+    chmod +x ./deploy/ubuntu/diagnostics.sh
+    ./deploy/ubuntu/diagnostics.sh
+    echo "❌ Deployment failed. Check the logs above."
+    # Optional: could push logs here too
+    exit 1
+}
+
+trap on_error ERR
+
 # Git Identity Fix (for VPS deployments)
 if [ -z "$(git config user.email)" ]; then
     echo "Configuring temporary git identity..."
@@ -121,24 +141,18 @@ echo "Deploying services fresh..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
 # 7. Healthcheck
-echo "Verifying deployment..." | tee -a "$LOG_FILE"
-./deploy/ubuntu/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
-    echo "❌ Healthcheck FAILED. Gathering diagnostics..." | tee -a "$LOG_FILE"
-    docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | tee -a "$LOG_FILE"
+echo "Verifying deployment..."
+./deploy/ubuntu/healthcheck.sh || {
+    echo "❌ Healthcheck FAILED. Running diagnostics..."
+    chmod +x ./deploy/ubuntu/diagnostics.sh
+    ./deploy/ubuntu/diagnostics.sh
     exit 1
 }
 
 # 8. Log Archive
-if [ "${GIT_PUSH_LOG:-true}" = "true" ]; then
-    echo "Archiving logs..." | tee -a "$LOG_FILE"
-    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    if git checkout -B logs/dev-deploy-history; then
-        cp "$LOG_FILE" deploy/logs/dev/latest-summary.log
-        git add -f deploy/logs/dev/
-        git commit -m "chore(log): dev deploy log $TIMESTAMP"
-        git push origin logs/dev-deploy-history --force || true
-        git checkout "$CURRENT_BRANCH"
-    fi
-fi
+# (Removing the heavy log archive push for now to avoid complexity during debug)
 
-echo "Done. Deployment finished successfully." | tee -a "$LOG_FILE"
+echo ""
+echo "=========================================="
+echo "✅ Dev Deployment finished successfully."
+echo "=========================================="

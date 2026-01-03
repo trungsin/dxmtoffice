@@ -11,4 +11,6 @@ sudo ufw status | grep -E "80|443|25"
 echo ""
 echo "Memory Usage:"
 free -h
+echo ""
+./deploy/ubuntu/healthcheck.sh
 echo "--------------------------"
