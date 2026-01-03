@@ -32,6 +32,21 @@ if [ -f .env.dev ]; then
     set +a
 fi
 
+# Generate mailcow.conf if it doesn't exist
+if [ ! -f mailcow/mailcow.conf ]; then
+    echo "⚠️  mailcow.conf not found, generating..." | tee -a "$LOG_FILE"
+    cd mailcow
+    if [ -f generate_config.sh ]; then
+        bash generate_config.sh
+        cd ..
+        echo "✅ mailcow.conf generated" | tee -a "$LOG_FILE"
+    else
+        cd ..
+        echo "ERROR: Cannot generate mailcow.conf - generate_config.sh not found!" | tee -a "$LOG_FILE"
+        exit 1
+    fi
+fi
+
 # Load mailcow.conf (using robust grep + export method)
 if [ -f mailcow/mailcow.conf ]; then
     echo "Loading Mailcow configuration..." | tee -a "$LOG_FILE"
