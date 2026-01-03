@@ -62,9 +62,10 @@ for prefix in "dxmt-" "dxmtoffice-" "mailcowdockerized-" "mailcow-"; do
 done
 
 # Remove networks
-for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-"; do
+for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-" "infrastructure_"; do
     docker network ls --filter "name=$pref" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
 done
+docker network rm infrastructure_default 2>/dev/null || true
 
 # 5. Host-Level Environment Recovery (DNS/Ports/Firewall)
 echo "Ensuring host environment is ready..." | tee -a "$LOG_FILE"

@@ -73,4 +73,3 @@ networks:
       config:
         - subnet: 172.31.1.0/24
   infrastructure_default:
-    name: infrastructure_default

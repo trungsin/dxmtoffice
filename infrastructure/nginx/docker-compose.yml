@@ -36,4 +36,3 @@ services:
 
 networks:
   infrastructure_default:
-    name: infrastructure_default
