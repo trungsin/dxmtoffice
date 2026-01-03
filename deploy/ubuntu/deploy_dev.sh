@@ -88,12 +88,13 @@ if command -v ufw >/dev/null; then
     ufw allow 53/udp >/dev/null || true
 fi
 
-# 5.3 Force Port Clearing (80, 443, 53)
-echo "Killing any process on ports 80, 443, 53..." | tee -a "$LOG_FILE"
+# 5.3 Force Port Clearing (80, 443, 53, 8080, 8081, 8082, 3000)
+echo "Killing any process on ports 80, 443, 53, 8080, 8081, 8082, 3000..." | tee -a "$LOG_FILE"
 # First, find and kill containers publishing these ports (any project)
-for port in 80 443 53; do
+for port in 80 443 53 8080 8081 8082 3000; do
     CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
     if [ -n "$CONTAINERS" ]; then
+        echo "Removing container using port $port: $CONTAINERS" | tee -a "$LOG_FILE"
         docker rm -f $CONTAINERS || true
     fi
     # Use fuser as the primary host-process killer

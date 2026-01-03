@@ -16,17 +16,10 @@ services:
     networks:
       - infrastructure_default
 
-  # Mailcow Port Overrides to avoid conflicts on 80/443
-  nginx-mailcow:
-    ports:
-      - "8080:80"
-      - "8443:443"
+  # Note: Mailcow ports are controlled by mailcow.conf (HTTP_PORT=8080, HTTPS_PORT=8443)
+  # No manual override here to avoid "double mapping" or "Bind failed" errors.
 
-  sogo-mailcow:
-    ports:
-      - "9081:20000"
-
-  # Office Port Overrides
+  # Office Port Overrides - ensure they match the containers internal ports
   nextcloud-web:
     ports:
       - "8081:80"
@@ -34,6 +27,3 @@ services:
   onlyoffice-app:
     ports:
       - "8082:80"
-
-# Note: Networks are defined in the included files.
-# No need to redeclare them here as external.
