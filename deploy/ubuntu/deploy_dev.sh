@@ -20,10 +20,7 @@ echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 # 1. Pre-flight check
 ./deploy/ubuntu/dev_sanity_check.sh | tee -a "$LOG_FILE"
 
-# 2. Restore missing Mailcow configs (idempotent)
-./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
-
-# 3. Load Environment Variables
+# 2. Load Environment Variables (Needed for cleanup and restoration)
 echo "Loading environment variables..." | tee -a "$LOG_FILE"
 
 # Load .env.dev
@@ -51,7 +48,7 @@ if [ -z "$DBNAME" ] || [ -z "$DBPASS" ] || [ -z "$REDISPASS" ]; then
     exit 1
 fi
 
-# 4. Cleanup and Conflict Resolution
+# 3. Cleanup and Conflict Resolution (CLEAN SLATE)
 echo "Stopping existing containers..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.dev.yml down 2>&1 | tee -a "$LOG_FILE" || true
 
@@ -67,10 +64,10 @@ for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-" "infrastructure_"; do
 done
 docker network rm infrastructure_default 2>/dev/null || true
 
-# 5. Host-Level Environment Recovery (DNS/Ports/Firewall)
+# 4. Host-Level Environment Recovery (DNS/Ports/Firewall)
 echo "Ensuring host environment is ready..." | tee -a "$LOG_FILE"
 
-# 5.1 Force DNS Fix (Aggressive)
+# 4.1 Force DNS Fix (Aggressive)
 echo "Configuring host DNS (8.8.8.8)..." | tee -a "$LOG_FILE"
 systemctl stop systemd-resolved 2>/dev/null || true
 systemctl disable systemd-resolved 2>/dev/null || true
@@ -78,7 +75,7 @@ rm -f /etc/resolv.conf
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 
-# 5.2 Configure Firewall (UFW)
+# 4.2 Configure Firewall (UFW)
 if command -v ufw >/dev/null; then
     echo "Configuring UFW..." | tee -a "$LOG_FILE"
     ufw --force enable || true
@@ -88,16 +85,14 @@ if command -v ufw >/dev/null; then
     ufw allow 53/udp >/dev/null || true
 fi
 
-# 5.3 Force Port Clearing (80, 443, 53, 8080, 8081, 8082, 3000)
+# 4.3 Force Port Clearing (80, 443, 53, 8080, 8081, 8082, 3000)
 echo "Killing any process on ports 80, 443, 53, 8080, 8081, 8082, 3000..." | tee -a "$LOG_FILE"
-# First, find and kill containers publishing these ports (any project)
 for port in 80 443 53 8080 8081 8082 3000; do
     CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
     if [ -n "$CONTAINERS" ]; then
         echo "Removing container using port $port: $CONTAINERS" | tee -a "$LOG_FILE"
         docker rm -f $CONTAINERS || true
     fi
-    # Use fuser as the primary host-process killer
     if command -v fuser >/dev/null; then
         fuser -k "$port"/tcp 2>/dev/null || true
         [ "$port" == "53" ] && fuser -k 53/udp 2>/dev/null || true
@@ -105,31 +100,33 @@ for port in 80 443 53 8080 8081 8082 3000; do
 done
 sleep 2
 
-# 6. Final Data Cleanup
-echo "Cleaning file artifacts..." | tee -a "$LOG_FILE"
-find mailcow/data/conf -type d -empty -delete 2>/dev/null || true
-# Force deletion of these files if they are not from original repo (safety)
-# This allows restore_mailcow_config.sh to pull fresh defaults if they look like artifacts
+# 5. RESTORATION STEP (Must be after cleanup, right before startup)
+# This prevents Docker from creating directories where files should be
+echo "Cleaning file artifacts and PERFORMING RESTORATION..." | tee -a "$LOG_FILE"
+# Force-remove specific problematic paths
 for path in "mailcow/data/conf/unbound/unbound.conf" "mailcow/data/conf/redis/redis-conf.sh"; do
     if [ -e "$path" ]; then
-        echo "Removing $path to force restoration..." | tee -a "$LOG_FILE"
+        echo "Clearing $path to ensure correct restoration..." | tee -a "$LOG_FILE"
         rm -rf "$path"
     fi
 done
 
-# 7. Start Services
+# Now run the restoration script
+./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
+
+# 6. Start Services
 echo "Deploying services fresh..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
-# 8. Healthcheck
+# 7. Healthcheck
 echo "Verifying deployment..." | tee -a "$LOG_FILE"
-./deploy/scripts/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
+./deploy/ubuntu/healthcheck.sh 2>&1 | tee -a "$LOG_FILE" || {
     echo "❌ Healthcheck FAILED. Gathering diagnostics..." | tee -a "$LOG_FILE"
     docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | tee -a "$LOG_FILE"
     exit 1
 }
 
-# 9. Log Archive
+# 8. Log Archive
 if [ "${GIT_PUSH_LOG:-true}" = "true" ]; then
     echo "Archiving logs..." | tee -a "$LOG_FILE"
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)

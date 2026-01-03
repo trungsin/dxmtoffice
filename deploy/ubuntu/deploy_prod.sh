@@ -9,7 +9,7 @@ LOG_FILE="deploy/logs/prod/deploy-$TIMESTAMP.log"
 # Ensure log directories exist
 mkdir -p deploy/logs/prod
 
-# Load environment variables properly
+# 1. Load Environment Variables (Needed for cleanup and restoration)
 echo "Loading environment variables..." | tee -a "$LOG_FILE"
 
 # Load .env.prod
@@ -33,10 +33,7 @@ fi
 
 echo "Starting Production Deployment..." | tee -a "$LOG_FILE"
 
-# 1. Restore missing Mailcow configs
-./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
-
-# 2. Cleanup and Conflict Resolution
+# 2. Cleanup and Conflict Resolution (CLEAN SLATE)
 echo "Stopping existing containers..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.prod.yml down 2>/dev/null || true
 
@@ -48,14 +45,6 @@ for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-" "infrastructure_"; do
     docker network ls --filter "name=$pref" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
 done
 docker network rm infrastructure_default 2>/dev/null || true
-
-# Force deletion of artifact-prone config files
-for path in "mailcow/data/conf/unbound/unbound.conf" "mailcow/data/conf/redis/redis-conf.sh"; do
-    if [ -e "$path" ]; then
-        echo "Removing $path to force restoration..." | tee -a "$LOG_FILE"
-        rm -rf "$path"
-    fi
-done
 
 # 3. Host-Level Environment Recovery (DNS/Ports/Firewall)
 echo "Ensuring host environment is ready..." | tee -a "$LOG_FILE"
@@ -90,11 +79,23 @@ for port in 80 443 53 8080 8081 8082 3000; do
 done
 sleep 2
 
-# 4. Start fresh
+# 4. RESTORATION STEP (Must be after cleanup, right before startup)
+echo "Cleaning file artifacts and PERFORMING RESTORATION..." | tee -a "$LOG_FILE"
+for path in "mailcow/data/conf/unbound/unbound.conf" "mailcow/data/conf/redis/redis-conf.sh"; do
+    if [ -e "$path" ]; then
+        echo "Clearing $path to ensure correct restoration..." | tee -a "$LOG_FILE"
+        rm -rf "$path"
+    fi
+done
+
+# Now run the restoration script
+./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
+
+# 5. Start fresh
 echo "Deploying production services..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.prod.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
-# 5. Healthcheck
+# 6. Healthcheck
 ./deploy/ubuntu/healthcheck.sh || {
     echo "Production Healthcheck FAILED. Triggering Rollback..." | tee -a "$LOG_FILE"
     ./deploy/scripts/rollback.sh

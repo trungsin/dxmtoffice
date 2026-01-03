@@ -11,6 +11,11 @@ function cleanup_and_create() {
     local target="$1"
     local dir=$(dirname "$target")
     
+    # Ensure parent directory exists and is a directory
+    if [ -f "$dir" ]; then
+        echo "Removing file blocking directory at $dir"
+        rm -f "$dir"
+    fi
     mkdir -p "$dir"
     
     # If target exists as a directory, it's a Docker artifact - remove it
