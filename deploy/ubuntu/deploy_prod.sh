@@ -44,12 +44,17 @@ docker ps -a --filter "name=dxmtoffice-" -q | xargs -r docker rm -f || true
 docker ps -a --filter "name=mailcowdockerized-" -q | xargs -r docker rm -f || true
 
 # Step 2.5: Handle host port conflicts (Port 53, 80, 443)
-if [ -f /etc/systemd/resolved.conf ] && grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf; then
-    echo "Disabling systemd-resolved DNSStubListener..."
-    sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
-    systemctl restart systemd-resolved || true
-    
-    # Ensure DNS works after disabling stub
+if [ -f /etc/systemd/resolved.conf ]; then
+    if grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null || ! grep -q "DNSStubListener=no" /etc/systemd/resolved.conf 2>/dev/null; then
+        echo "Updating systemd-resolved configuration to free port 53..."
+        sed -i 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
+        sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
+        systemctl restart systemd-resolved || true
+    fi
+fi
+
+# Always ensures DNS works after disabling stub
+if grep -q "127.0.0.53" /etc/resolv.conf 2>/dev/null; then
     echo "Updating /etc/resolv.conf to use Google DNS..."
     rm -f /etc/resolv.conf
     echo "nameserver 8.8.8.8" > /etc/resolv.conf

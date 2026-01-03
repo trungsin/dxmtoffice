@@ -115,19 +115,23 @@ docker network ls --filter "name=mailcow-" -q | xargs -r docker network rm 2>&1 
 echo "Ensuring host ports 53, 80, 443 are free..." | tee -a "$LOG_FILE"
 
 # Port 53 (Unbound)
-if [ -f /etc/systemd/resolved.conf ] && grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null; then
-    echo "Disabling systemd-resolved DNSStubListener to free port 53..." | tee -a "$LOG_FILE"
-    sed -i 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
-    sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
-    systemctl restart systemd-resolved || true
-    
-    # After disabling stub, /etc/resolv.conf pointing to 127.0.0.53 will break DNS.
-    # We must ensure it points to a working nameserver.
-    echo "Updating /etc/resolv.conf to use Google DNS... (to let Docker pull images)" | tee -a "$LOG_FILE"
-    # Remove symlink if it exists and write fresh file
+echo "Checking for DNS port 53 conflicts..." | tee -a "$LOG_FILE"
+if [ -f /etc/systemd/resolved.conf ]; then
+    if grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null || ! grep -q "DNSStubListener=no" /etc/systemd/resolved.conf 2>/dev/null; then
+        echo "Updating systemd-resolved configuration to free port 53..." | tee -a "$LOG_FILE"
+        sed -i 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
+        sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
+        systemctl restart systemd-resolved || true
+    fi
+fi
+
+# IMPORTANT: Always ensure /etc/resolv.conf is working if stub is disabled or port 53 is intended for Unbound
+if grep -q "127.0.0.53" /etc/resolv.conf 2>/dev/null; then
+    echo "Host DNS is pointing to local stub but we need it free for Unbound. Updating /etc/resolv.conf..." | tee -a "$LOG_FILE"
     rm -f /etc/resolv.conf
     echo "nameserver 8.8.8.8" > /etc/resolv.conf
     echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+    echo "✅ /etc/resolv.conf updated to Google DNS" | tee -a "$LOG_FILE"
 fi
 
 # Port 80/443 (NPM)
