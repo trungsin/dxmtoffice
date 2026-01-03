@@ -13,6 +13,7 @@ check_port() {
 }
 
 check_port 80 "Nginx Proxy Manager"
+check_port 81 "NPM Admin UI"
 check_port 443 "SSL Gateway"
 check_port 25 "Postfix (SMTP)"
 check_port 587 "Submission (SMTP)"
