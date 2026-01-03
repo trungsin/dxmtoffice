@@ -35,6 +35,35 @@ fi
 
 # Deploy services
 echo "Deploying dev services..." | tee -a "$LOG_FILE"
+
+# Step 1: Stop all containers first to prevent directory recreation
+echo "Stopping existing containers..." | tee -a "$LOG_FILE"
+docker compose -f docker-compose.dev.yml down 2>&1 | tee -a "$LOG_FILE" || true
+
+# Step 2: Aggressive cleanup of Docker-created directories
+echo "Cleaning Docker artifacts..." | tee -a "$LOG_FILE"
+find mailcow/data/conf -type d -empty -delete 2>/dev/null || true
+
+# Remove specific known problematic paths if they exist as directories
+for path in \
+    "mailcow/data/conf/unbound/unbound.conf" \
+    "mailcow/data/conf/redis/redis-conf.sh" \
+    "mailcow/data/conf/sogo/custom-favicon.ico" \
+    "mailcow/data/conf/sogo/custom-fulllogo.svg" \
+    "mailcow/data/conf/sogo/custom-fulllogo.png" \
+    "mailcow/data/conf/sogo/custom-shortlogo.svg" \
+    "mailcow/data/conf/sogo/custom-theme.js" \
+    "mailcow/data/conf/sogo/custom-sogo.js"; do
+    if [ -d "$path" ]; then
+        echo "Removing bad directory: $path" | tee -a "$LOG_FILE"
+        rm -rf "$path"
+    fi
+done
+
+# Step 3: Re-run restore to ensure all files exist
+./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
+
+# Step 4: Now start containers
 docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
 # Healthcheck
