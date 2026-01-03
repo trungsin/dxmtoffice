@@ -73,14 +73,17 @@ fi
 # 4. Shared Network Check
 echo ""
 echo "--- Infrastructure Network Check ---"
-if docker network inspect infrastructure_default >/dev/null 2>&1; then
-    echo "✅ infrastructure_default network exists."
-    # Count members
-    MEMBER_COUNT=$(docker network inspect infrastructure_default --format '{{len .Containers}}')
-    echo "   Members: $MEMBER_COUNT containers"
-else
-    echo "❌ infrastructure_default network is MISSING!"
+# Detect network name (it might be prefixed by the compose project name)
+REAL_NET_NAME=$(docker network ls --format "{{.Name}}" | grep "infrastructure_default" | head -n 1)
+
+if [ -z "$REAL_NET_NAME" ]; then
+    echo "❌ infrastructure_default network (or prefixed version) is MISSING!"
     EXIT_CODE=1
+else
+    echo "✅ Network found: $REAL_NET_NAME"
+    # Count members
+    MEMBER_COUNT=$(docker network inspect "$REAL_NET_NAME" --format '{{len .Containers}}')
+    echo "   Members: $MEMBER_COUNT containers"
 fi
 
 echo ""

@@ -59,11 +59,26 @@ echo "DNS (resolv.conf):"
 cat /etc/resolv.conf
 echo ""
 
-echo "--- 7. Cloud Firewall Detection Hints ---"
-echo "Note: If 443 is UP in 'Listening ports' but TIMEOUT from outside,"
-echo "      you MUST open it in your VPS provider's control panel."
-echo "Diagnostic check (External connection test to 443):"
-timeout 2 bash -c 'cat < /dev/tcp/127.0.0.1/443' && echo "✅ Local 443 is reachable" || echo "❌ Local 443 connection REFUSED"
+echo "Note: If 'Local Connection' works but you can't access from outside,"
+echo "      then your Cloud Provider (e.g. DigitalOcean) is blocking the ports."
+echo ""
+check_local() {
+    local port=$1
+    local name=$2
+    echo -n "Checking Local $name ($port): "
+    if curl -s -o /dev/null --connect-timeout 2 "http://localhost:$port" 2>/dev/null; then
+        echo "✅ RESPONDING"
+    elif curl -k -s -o /dev/null --connect-timeout 2 "https://localhost:$port" 2>/dev/null; then
+        echo "✅ RESPONDING (HTTPS)"
+    else
+        echo "❌ REFUSED (Local test)"
+    fi
+}
+
+check_local 80 "HTTP"
+check_local 81 "NPM Admin"
+check_local 443 "HTTPS"
+check_local 8080 "Mailcow UI"
 echo ""
 
 echo "=========================================="
