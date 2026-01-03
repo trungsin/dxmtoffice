@@ -100,13 +100,37 @@ docker compose -f docker-compose.dev.yml down 2>&1 | tee -a "$LOG_FILE" || true
 # Step 2: Clean up old Docker resources to prevent network conflicts
 echo "Cleaning up old Docker networks and containers..." | tee -a "$LOG_FILE"
 
-# Remove old project containers (dxmtoffice prefix)
+# Remove old project containers (all potential prefixes)
 docker ps -a --filter "name=dxmtoffice-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
 docker ps -a --filter "name=dxmt-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
+docker ps -a --filter "name=mailcowdockerized-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
+docker ps -a --filter "name=mailcow-" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
 
 # Remove old project networks  
 docker network ls --filter "name=dxmtoffice_" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
 docker network ls --filter "name=mailcowdockerized_" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
+docker network ls --filter "name=mailcow-" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
+
+# Step 2.5: Handle host port conflicts (Port 53, 80, 443)
+echo "Ensuring host ports 53, 80, 443 are free..." | tee -a "$LOG_FILE"
+
+# Port 53 (Unbound)
+if [ -f /etc/systemd/resolved.conf ] && grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null; then
+    echo "Disabling systemd-resolved DNSStubListener..." | tee -a "$LOG_FILE"
+    sed -i 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
+    sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
+    systemctl restart systemd-resolved || true
+fi
+
+# Port 80/443 (NPM)
+if command -v lsof >/dev/null; then
+    if lsof -Pi :80,443 -sTCP:LISTEN -t >/dev/null ; then
+        echo "Found host processes on port 80/443. Stopping them..." | tee -a "$LOG_FILE"
+        systemctl stop nginx apache2 2>/dev/null || true
+        # Kill if still there
+        fuser -k 80/tcp 443/tcp 2>/dev/null || true
+    fi
+fi
 
 # Step 3: Aggressive cleanup of Docker-created directories
 echo "Cleaning Docker file artifacts..." | tee -a "$LOG_FILE"
