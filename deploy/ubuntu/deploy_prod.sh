@@ -64,8 +64,8 @@ if command -v ufw >/dev/null; then
 fi
 
 # 3.3 EXTREME Port Clearing
-echo "Killing any process on ports 80, 443, 53, 8080, 8081, 8082, 3000..." | tee -a "$LOG_FILE"
-for port in 80 443 53 8080 8081 8082 3000; do
+echo "Killing any process on ports 80, 443, 53, 25, 465, 587, 143, 993, 995, 8080, 8081, 8082, 3000..." | tee -a "$LOG_FILE"
+for port in 80 443 53 25 465 587 143 993 995 8080 8081 8082 3000; do
     CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
     [ -n "$CONTAINERS" ] && docker rm -f $CONTAINERS || true
     if command -v fuser >/dev/null; then

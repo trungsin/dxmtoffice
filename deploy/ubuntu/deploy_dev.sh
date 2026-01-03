@@ -81,9 +81,9 @@ if command -v ufw >/dev/null; then
     ufw allow 53/udp >/dev/null || true
 fi
 
-# 4.3 Force Port Clearing (80, 443, 53, 8080, 8081, 8082, 3000)
-echo "Killing any process on ports 80, 443, 53, 8080, 8081, 8082, 3000..." | tee -a "$LOG_FILE"
-for port in 80 443 53 8080 8081 8082 3000; do
+# 4.3 Force Port Clearing (Standard + Mail Ports)
+echo "Killing any process on ports 80, 443, 53, 25, 465, 587, 143, 993, 995, 8080-8082, 3000..." | tee -a "$LOG_FILE"
+for port in 80 443 53 25 465 587 143 993 995 8080 8081 8082 3000; do
     CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
     if [ -n "$CONTAINERS" ]; then
         echo "Removing container using port $port: $CONTAINERS" | tee -a "$LOG_FILE"
