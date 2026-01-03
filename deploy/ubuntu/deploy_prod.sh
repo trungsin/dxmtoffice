@@ -43,24 +43,39 @@ echo "Cleaning up Docker resources..."
 docker ps -a --filter "name=dxmtoffice-" -q | xargs -r docker rm -f || true
 docker ps -a --filter "name=mailcowdockerized-" -q | xargs -r docker rm -f || true
 
-# Step 2.5: Handle host port conflicts (Port 53, 80, 443)
-if [ -f /etc/systemd/resolved.conf ]; then
-    if grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null || ! grep -q "DNSStubListener=no" /etc/systemd/resolved.conf 2>/dev/null; then
-        echo "Updating systemd-resolved configuration to free port 53..."
-        sed -i 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
-        sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf || true
-        systemctl restart systemd-resolved || true
-    fi
+# Step 2.5: Handle host port conflicts (Port 53, 80, 443) and Firewall
+echo "Ensuring host ports 53, 80, 443 are free and firewall is configured..."
+
+# 1. Force DNS Fix
+echo "Forcing host DNS to Google (8.8.8.8)..."
+systemctl stop systemd-resolved 2>/dev/null || true
+systemctl disable systemd-resolved 2>/dev/null || true
+rm -f /etc/resolv.conf
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+
+# 2. Open Firewall Ports (UFW)
+if command -v ufw >/dev/null; then
+    echo "Configuring UFW firewall..."
+    ufw allow 80/tcp || true
+    ufw allow 443/tcp || true
+    ufw allow 25/tcp || true
+    ufw allow 465/tcp || true
+    ufw allow 587/tcp || true
+    ufw allow 110/tcp || true
+    ufw allow 143/tcp || true
+    ufw allow 993/tcp || true
+    ufw allow 995/tcp || true
+    ufw allow 4190/tcp || true
+    ufw allow 53/tcp || true
+    ufw allow 53/udp || true
+    ufw allow 8080/tcp || true
+    ufw allow 8081/tcp || true
+    ufw allow 8082/tcp || true
+    ufw allow 3000/tcp || true
 fi
 
-# Always ensures DNS works after disabling stub
-if grep -q "127.0.0.53" /etc/resolv.conf 2>/dev/null; then
-    echo "Updating /etc/resolv.conf to use Google DNS..."
-    rm -f /etc/resolv.conf
-    echo "nameserver 8.8.8.8" > /etc/resolv.conf
-    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-fi
-
+# 3. Clear Port 80/443
 if command -v lsof >/dev/null && lsof -Pi :80,443 -sTCP:LISTEN -t >/dev/null; then
     echo "Clearing port 80/443..."
     systemctl stop nginx apache2 2>/dev/null || true
