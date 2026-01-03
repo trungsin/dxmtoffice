@@ -37,6 +37,14 @@ check_port 8082 "OnlyOffice (Internal)"
 check_port 3000 "AI Service (Internal)"
 
 echo ""
+echo "--- Testing Local Connectivity ---"
+if curl -k -s --connect-timeout 2 https://localhost >/dev/null; then
+    echo "✅ Local HTTPS (443) is responding."
+else
+    echo "⚠️ Local HTTPS (443) is NOT responding (SSL may not be configured in NPM yet)."
+fi
+
+echo ""
 
 # 2. Container Status
 echo "--- Container Status ---"
