@@ -20,9 +20,9 @@ function cleanup_and_create() {
     fi
 }
 
-# 0. Core Data Repair (Web/Assets)
-if [ ! -d "$CONF_DIR/../web" ] || [ ! -d "$CONF_DIR/../assets" ]; then
-    echo "⚠️  Missing core Mailcow data (web/assets). Attempting auto-repair..."
+# 0. Core Data Repair (Web/Assets/Conf)
+if [ ! -d "$CONF_DIR/../web" ] || [ ! -d "$CONF_DIR/../assets" ] || [ ! -f "$CONF_DIR/unbound/unbound.conf" ]; then
+    echo "⚠️  Missing core Mailcow data or configs. Attempting auto-repair..."
     TMP_DIR=$(mktemp -d)
     
     echo "Cloning core files from upstream..."
@@ -37,29 +37,20 @@ if [ ! -d "$CONF_DIR/../web" ] || [ ! -d "$CONF_DIR/../assets" ]; then
         echo "Restoring data/assets..."
         cp -r "$TMP_DIR/data/assets" "$CONF_DIR/../"
     fi
+
+    if [ ! -f "$CONF_DIR/unbound/unbound.conf" ]; then
+        echo "Restoring data/conf defaults (Unbound)..."
+        mkdir -p "$CONF_DIR/unbound"
+        cp "$TMP_DIR/data/conf/unbound/unbound.conf" "$CONF_DIR/unbound/"
+    fi
     
     rm -rf "$TMP_DIR"
-    echo "✅ Core data restored."
+    echo "✅ Core data and defaults restored."
 fi
 
 # 1. Unbound
 cleanup_and_create "$CONF_DIR/unbound/unbound.conf"
-cat > "$CONF_DIR/unbound/unbound.conf" <<EOF
-server:
-  verbosity: 1
-  interface: 0.0.0.0
-  port: 53
-  do-ip4: yes
-  do-udp: yes
-  do-tcp: yes
-  do-ip6: no
-  access-control: 0.0.0.0/0 allow
-  chroot: ""
-  logfile: ""
-  use-syslog: no
-  hide-identity: yes
-  hide-version: yes
-EOF
+# Restored from upstream in step 0 if missing.
 
 # 2. Redis
 cleanup_and_create "$CONF_DIR/redis/redis-conf.sh"

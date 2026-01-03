@@ -49,6 +49,14 @@ for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-" "infrastructure_"; do
 done
 docker network rm infrastructure_default 2>/dev/null || true
 
+# Force deletion of artifact-prone config files
+for path in "mailcow/data/conf/unbound/unbound.conf" "mailcow/data/conf/redis/redis-conf.sh"; do
+    if [ -e "$path" ]; then
+        echo "Removing $path to force restoration..." | tee -a "$LOG_FILE"
+        rm -rf "$path"
+    fi
+done
+
 # 3. Host-Level Environment Recovery (DNS/Ports/Firewall)
 echo "Ensuring host environment is ready..." | tee -a "$LOG_FILE"
 

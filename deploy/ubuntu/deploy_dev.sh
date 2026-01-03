@@ -108,8 +108,13 @@ sleep 2
 # 6. Final Data Cleanup
 echo "Cleaning file artifacts..." | tee -a "$LOG_FILE"
 find mailcow/data/conf -type d -empty -delete 2>/dev/null || true
+# Force deletion of these files if they are not from original repo (safety)
+# This allows restore_mailcow_config.sh to pull fresh defaults if they look like artifacts
 for path in "mailcow/data/conf/unbound/unbound.conf" "mailcow/data/conf/redis/redis-conf.sh"; do
-    [ -d "$path" ] && rm -rf "$path"
+    if [ -e "$path" ]; then
+        echo "Removing $path to force restoration..." | tee -a "$LOG_FILE"
+        rm -rf "$path"
+    fi
 done
 
 # 7. Start Services
