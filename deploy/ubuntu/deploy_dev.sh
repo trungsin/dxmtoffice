@@ -117,51 +117,57 @@ echo "Ensuring host ports 53, 80, 443 are free..." | tee -a "$LOG_FILE"
 # Step 2.5: Handle host port conflicts (Port 53, 80, 443) and Firewall
 echo "Ensuring host ports 53, 80, 443 are free and firewall is configured..." | tee -a "$LOG_FILE"
 
-# 1. Force DNS Fix (Idempotent and Aggressive)
-echo "Forcing host DNS to Google (8.8.8.8) to ensure Docker pull works..." | tee -a "$LOG_FILE"
-# Stop systemd-resolved to prevent it from resetting resolv.conf
+# 1. Force DNS Fix (Aggressive)
+echo "Forcing host DNS to Google (8.8.8.8)..." | tee -a "$LOG_FILE"
 systemctl stop systemd-resolved 2>/dev/null || true
 systemctl disable systemd-resolved 2>/dev/null || true
 rm -f /etc/resolv.conf
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-echo "✅ /etc/resolv.conf forced to Google DNS" | tee -a "$LOG_FILE"
 
 # 2. Open Firewall Ports (UFW)
 if command -v ufw >/dev/null; then
     echo "Configuring UFW firewall..." | tee -a "$LOG_FILE"
+    # Ensure UFW is enabled first
+    ufw --force enable || true
     # Basic Web
-    ufw allow 80/tcp || true
-    ufw allow 443/tcp || true
-    # Mailcow (SMTP/IMAP/POP3)
-    ufw allow 25/tcp || true
-    ufw allow 465/tcp || true
-    ufw allow 587/tcp || true
-    ufw allow 110/tcp || true
-    ufw allow 143/tcp || true
-    ufw allow 993/tcp || true
-    ufw allow 995/tcp || true
-    ufw allow 4190/tcp || true
-    # DNS (Unbound)
-    ufw allow 53/tcp || true
+    for port in 80 443 25 465 587 110 143 993 995 4190 53 8080 8081 8082 3000; do
+        ufw allow "$port"/tcp || true
+    done
     ufw allow 53/udp || true
-    # Custom Services
-    ufw allow 8080/tcp || true # Mailcow UI
-    ufw allow 8081/tcp || true # Nextcloud
-    ufw allow 8082/tcp || true # OnlyOffice
-    ufw allow 3000/tcp || true # AI Service
     echo "✅ UFW ports opened." | tee -a "$LOG_FILE"
 fi
 
-# 3. Clear Port 80/443 (NPM)
-if command -v lsof >/dev/null; then
-    if lsof -Pi :80,443 -sTCP:LISTEN -t >/dev/null ; then
-        echo "Found host processes on port 80/443. Stopping them..." | tee -a "$LOG_FILE"
-        systemctl stop nginx apache2 2>/dev/null || true
-        # Kill if still there
-        fuser -k 80/tcp 443/tcp 2>/dev/null || true
+# 3. EXTREME Port Clearing (80, 443, 53)
+echo "Killing any process or container on ports 80, 443, 53..." | tee -a "$LOG_FILE"
+# First, find and kill containers publishing these ports
+for port in 80 443 53; do
+    CONFLICT_CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
+    if [ -n "$CONFLICT_CONTAINERS" ]; then
+        echo "Removing containers using port $port: $CONFLICT_CONTAINERS" | tee -a "$LOG_FILE"
+        docker rm -f $CONFLICT_CONTAINERS || true
     fi
-fi
+done
+
+# Second, kill host processes using ss/fuser fallback
+for port in 80 443 53; do
+    if command -v ss >/dev/null; then
+        PIDS=$(ss -tlpn "sport = :$port" | grep -oP 'pid=\K[0-9]+' | sort -u)
+        if [ -n "$PIDS" ]; then
+            echo "Killing PIDs on port $port: $PIDS" | tee -a "$LOG_FILE"
+            echo "$PIDS" | xargs kill -9 2>/dev/null || true
+        fi
+    fi
+    # Fallback to fuser
+    if command -v fuser >/dev/null; then
+        fuser -k "$port"/tcp 2>/dev/null || true
+        [ "$port" == "53" ] && fuser -k 53/udp 2>/dev/null || true
+    fi
+done
+
+# Wait for ports to settle
+echo "Waiting for ports to be released..." | tee -a "$LOG_FILE"
+sleep 3
 
 # Step 3: Aggressive cleanup of Docker-created directories
 echo "Cleaning Docker file artifacts..." | tee -a "$LOG_FILE"

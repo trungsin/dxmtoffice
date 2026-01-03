@@ -57,30 +57,30 @@ echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 # 2. Open Firewall Ports (UFW)
 if command -v ufw >/dev/null; then
     echo "Configuring UFW firewall..."
-    ufw allow 80/tcp || true
-    ufw allow 443/tcp || true
-    ufw allow 25/tcp || true
-    ufw allow 465/tcp || true
-    ufw allow 587/tcp || true
-    ufw allow 110/tcp || true
-    ufw allow 143/tcp || true
-    ufw allow 993/tcp || true
-    ufw allow 995/tcp || true
-    ufw allow 4190/tcp || true
-    ufw allow 53/tcp || true
+    ufw --force enable || true
+    for port in 80 443 25 465 587 110 143 993 995 4190 53 8080 8081 8082 3000; do
+        ufw allow "$port"/tcp || true
+    done
     ufw allow 53/udp || true
-    ufw allow 8080/tcp || true
-    ufw allow 8081/tcp || true
-    ufw allow 8082/tcp || true
-    ufw allow 3000/tcp || true
 fi
 
-# 3. Clear Port 80/443
-if command -v lsof >/dev/null && lsof -Pi :80,443 -sTCP:LISTEN -t >/dev/null; then
-    echo "Clearing port 80/443..."
-    systemctl stop nginx apache2 2>/dev/null || true
-    fuser -k 80/tcp 443/tcp 2>/dev/null || true
-fi
+# 3. EXTREME Port Clearing (80, 443, 53)
+echo "Killing any process or container on ports 80, 443, 53..."
+for port in 80 443 53; do
+    CONFLICT_CONTAINERS=$(docker ps -a --filter "publish=$port" -q)
+    if [ -n "$CONFLICT_CONTAINERS" ]; then
+        docker rm -f $CONFLICT_CONTAINERS || true
+    fi
+    if command -v ss >/dev/null; then
+        PIDS=$(ss -tlpn "sport = :$port" | grep -oP 'pid=\K[0-9]+' | sort -u)
+        [ -n "$PIDS" ] && echo "$PIDS" | xargs kill -9 2>/dev/null || true
+    fi
+    if command -v fuser >/dev/null; then
+        fuser -k "$port"/tcp 2>/dev/null || true
+        [ "$port" == "53" ] && fuser -k 53/udp 2>/dev/null || true
+    fi
+done
+sleep 2
 
 # Step 3: Start fresh
 docker compose -f docker-compose.prod.yml up -d --build
