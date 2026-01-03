@@ -24,6 +24,12 @@ if [ -f .env.dev ]; then
     export $(grep -v '^#' .env.dev | xargs)
 fi
 
+# Load Mailcow Environment
+if [ -f mailcow/mailcow.conf ]; then
+    echo "Loading Mailcow configuration..." | tee -a "$LOG_FILE"
+    export $(grep -v '^#' mailcow/mailcow.conf | xargs)
+fi
+
 # Deploy services
 echo "Deploying dev services..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"

@@ -7,6 +7,12 @@ if [ -f .env.prod ]; then
     export $(grep -v '^#' .env.prod | xargs)
 fi
 
+# Load Mailcow Environment
+if [ -f mailcow/mailcow.conf ]; then
+    echo "Loading Mailcow configuration..."
+    export $(grep -v '^#' mailcow/mailcow.conf | xargs)
+fi
+
 # Ensure log directories exist
 mkdir -p deploy/logs/prod
 
