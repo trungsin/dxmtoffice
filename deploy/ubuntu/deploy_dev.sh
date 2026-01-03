@@ -35,13 +35,24 @@ fi
 # Generate mailcow.conf if it doesn't exist
 if [ ! -f mailcow/mailcow.conf ]; then
     echo "⚠️  mailcow.conf not found, generating..." | tee -a "$LOG_FILE"
-    cd mailcow
+    
+    # Save current directory
+    ORIGINAL_DIR=$(pwd)
+    
+    # Run generate script from mailcow directory
+    cd mailcow || { echo "ERROR: Cannot cd to mailcow/"; exit 1; }
+    
     if [ -f generate_config.sh ]; then
-        bash generate_config.sh
-        cd ..
+        # Run with ./generate_config.sh instead of bash to preserve script context
+        ./generate_config.sh || {
+            cd "$ORIGINAL_DIR"
+            echo "ERROR: generate_config.sh failed!" | tee -a "$LOG_FILE"
+            exit 1
+        }
+        cd "$ORIGINAL_DIR"
         echo "✅ mailcow.conf generated" | tee -a "$LOG_FILE"
     else
-        cd ..
+        cd "$ORIGINAL_DIR"
         echo "ERROR: Cannot generate mailcow.conf - generate_config.sh not found!" | tee -a "$LOG_FILE"
         exit 1
     fi
