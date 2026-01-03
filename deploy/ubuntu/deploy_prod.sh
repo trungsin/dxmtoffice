@@ -36,14 +36,15 @@ echo "Starting Production Deployment..." | tee -a "$LOG_FILE"
 echo "Stopping existing containers..." | tee -a "$LOG_FILE"
 docker compose -f docker-compose.prod.yml down 2>/dev/null || true
 
-echo "Cleaning up Docker resources..." | tee -a "$LOG_FILE"
-for prefix in "dxmt-" "dxmtoffice-" "mailcowdockerized-" "mailcow-"; do
+echo "Cleaning up Docker resources (Aggressive)..." | tee -a "$LOG_FILE"
+for prefix in "dxmt-" "dxmtoffice-" "mailcowdockerized-" "mailcow-" "onemail-" "office-" "infrastructure-" "valentine-"; do
     docker ps -a --filter "name=$prefix" -q | xargs -r docker rm -f 2>&1 | tee -a "$LOG_FILE" || true
 done
-for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-" "infrastructure_"; do
+for pref in "dxmtoffice_" "mailcowdockerized_" "mailcow-" "infrastructure_" "onemail_" "office_" "valentine_"; do
     docker network ls --filter "name=$pref" -q | xargs -r docker network rm 2>&1 | tee -a "$LOG_FILE" || true
 done
 docker network rm infrastructure_default 2>/dev/null || true
+docker network prune -f 2>&1 | tee -a "$LOG_FILE" || true
 
 # 3. Host-Level Environment Recovery (DNS/Ports/Firewall)
 echo "Ensuring host environment is ready..." | tee -a "$LOG_FILE"
