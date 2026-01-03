@@ -23,6 +23,9 @@ echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 # 2. Load Environment Variables (Needed for cleanup and restoration)
 echo "Loading environment variables..." | tee -a "$LOG_FILE"
 
+# Set Project Name explicitly to avoid project-prefixed network conflicts
+export COMPOSE_PROJECT_NAME=mailcowdockerized
+
 # Load .env.dev
 if [ -f .env.dev ]; then
     set -a
@@ -75,7 +78,7 @@ echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 if command -v ufw >/dev/null; then
     echo "Configuring UFW..." | tee -a "$LOG_FILE"
     ufw --force enable || true
-    for port in 80 443 25 465 587 110 143 993 995 4190 53 8080 8081 8082 3000; do
+    for port in 80 81 443 25 465 587 110 143 993 995 4190 53 8080 8081 8082 3000; do
         ufw allow "$port"/tcp >/dev/null || true
     done
     ufw allow 53/udp >/dev/null || true
