@@ -22,15 +22,29 @@ echo "Starting Dev Deployment at $TIMESTAMP" | tee -a "$LOG_FILE"
 # Restore missing Mailcow configs (idempotent)
 ./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
 
-# Load environment
+# Load environment variables properly
+echo "Loading environment variables..." | tee -a "$LOG_FILE"
+
+# Load .env.dev
 if [ -f .env.dev ]; then
-    export $(grep -v '^#' .env.dev | xargs)
+    set -a
+    source .env.dev
+    set +a
 fi
 
-# Load Mailcow Environment
+# Load mailcow.conf (using source instead of grep to handle multi-line values)
 if [ -f mailcow/mailcow.conf ]; then
     echo "Loading Mailcow configuration..." | tee -a "$LOG_FILE"
-    export $(grep -v '^#' mailcow/mailcow.conf | xargs)
+    set -a
+    source mailcow/mailcow.conf
+    set +a
+fi
+
+# Verify critical variables are set
+if [ -z "$DBNAME" ] || [ -z "$DBPASS" ] || [ -z "$REDISPASS" ]; then
+    echo "ERROR: Critical environment variables not loaded!" | tee -a "$LOG_FILE"
+    echo "DBNAME=$DBNAME, DBPASS=$DBPASS, REDISPASS=$REDISPASS" | tee -a "$LOG_FILE"
+    exit 1
 fi
 
 # Deploy services
@@ -60,10 +74,7 @@ for path in \
     fi
 done
 
-# Step 3: Re-run restore to ensure all files exist
-./deploy/scripts/restore_mailcow_config.sh | tee -a "$LOG_FILE"
-
-# Step 4: Now start containers
+# Step 3: Now start containers (restore already ran earlier)
 docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tee -a "$LOG_FILE"
 
 # Healthcheck
