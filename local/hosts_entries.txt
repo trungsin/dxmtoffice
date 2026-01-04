@@ -1,0 +1,12 @@
+# DXMT Local DNS Mapping
+# Copy these entries to your hosts file:
+# - Mac/Linux: /etc/hosts
+# - Windows: C:\Windows\System32\drivers\etc\hosts
+
+127.0.0.1 feelmagic.store
+127.0.0.1 mail.feelmagic.store
+127.0.0.1 office.feelmagic.store
+127.0.0.1 ai.feelmagic.store
+127.0.0.1 sogo.feelmagic.store
+127.0.0.1 autodiscover.feelmagic.store
+127.0.0.1 autoconfig.feelmagic.store
